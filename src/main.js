@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
       initializeThemeToggle();
       initializeTerminal();
       initializeHamburgerMenu();
+      initializeWorkerHandlers();
+      initializeRunButton();
     }
   }, 100);
 });
@@ -37,8 +39,22 @@ function initializeEditor() {
   window.lccLinter = linter;
   
   // Initialize the hover provider
-  const hoverProvider = new LccHoverProvider(editor);
-  window.lccHoverProvider = hoverProvider;
+  if (window.lccHoverProvider) {
+    // Dispose of any existing hover provider
+    try {
+      window.lccHoverProvider.dispose();
+    } catch (error) {
+      console.error("Error disposing hover provider:", error);
+    }
+  }
+  
+  try {
+    const hoverProvider = new LccHoverProvider(editor);
+    window.lccHoverProvider = hoverProvider;
+    console.log("Hover provider initialized successfully");
+  } catch (error) {
+    console.error("Error initializing hover provider:", error);
+  }
   
   // Run initial lint
   linter.lint();
@@ -46,6 +62,15 @@ function initializeEditor() {
   // Set up change event to trigger linting
   editor.on('change', () => {
     linter.lint();
+  });
+  
+  // Set up editor focus event to refresh hover provider
+  editor.on('focus', () => {
+    if (window.lccHoverProvider) {
+      // Reinitialize hover provider to ensure it works after editor focus
+      window.lccHoverProvider.dispose();
+      window.lccHoverProvider = new LccHoverProvider(editor);
+    }
   });
 }
 
@@ -77,18 +102,85 @@ function initializeTerminal() {
       
       // Process the input
       processTerminalInput(input);
+      
+      // Focus the input field again
+      setTimeout(() => {
+        terminalInput.focus();
+      }, 10);
+    }
+    
+    // Basic autocomplete for LCC commands
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      autocompleteCommand(terminalInput);
     }
   });
+  
+  // Add clear button functionality
+  const btnClear = document.getElementById('btn-clear');
+  if (btnClear) {
+    btnClear.addEventListener('click', () => {
+      terminal.innerHTML = '';
+      terminalInput.focus();
+    });
+  }
+}
+
+// Simple autocomplete for LCC assembly commands
+function autocompleteCommand(input) {
+  const commands = [
+    'add', 'sub', 'mul', 'div', 'rem', 'and', 'or', 'xor', 'not',
+    'mov', 'ld', 'st', 'lea', 'ldr', 'str', 'push', 'pop',
+    'br', 'brz', 'brn', 'brp', 'jmp', 'jsr', 'ret', 'bl', 'blr',
+    'dout', 'hout', 'aout', 'sout', 'din', 'hin', 'ain', 'sin',
+    'halt', 'nl', '.word', '.zero', '.string', '.start', '.global', '.extern'
+  ];
+  
+  const currentValue = input.value;
+  const words = currentValue.split(/\s+/);
+  const lastWord = words[words.length - 1];
+  
+  if (lastWord) {
+    const matches = commands.filter(cmd => cmd.startsWith(lastWord.toLowerCase()));
+    if (matches.length === 1) {
+      words[words.length - 1] = matches[0];
+      input.value = words.join(' ');
+    } else if (matches.length > 1) {
+      // Show available completions in terminal
+      appendToTerminal(`Available: ${matches.join(', ')}`, 'text-blue-400');
+    }
+  }
 }
 
 // Process terminal input
 function processTerminalInput(input) {
   // Send the input to the worker
   if (window.worker) {
-    window.worker.postMessage({
-      type: 'stdin-fallback',
-      payload: { input }
-    });
+    // Try SharedArrayBuffer first, fallback to message passing
+    if (window.inputView && window.indexView) {
+      try {
+        // Encode input string into the shared buffer
+        const encoded = new TextEncoder().encode(input + '\n');
+        window.inputView.set(encoded, 0);
+        Atomics.store(window.indexView, 0, encoded.length);
+        
+        // Notify Worker of new input
+        Atomics.notify(window.indexView, 0);
+      } catch (e) {
+        console.error("Error sending input via SharedArrayBuffer:", e);
+        // Fallback to message passing
+        window.worker.postMessage({
+          type: "stdin-fallback", 
+          payload: { input }
+        });
+      }
+    } else {
+      // Fallback to message passing
+      window.worker.postMessage({
+        type: "stdin-fallback",
+        payload: { input }
+      });
+    }
   }
 }
 
@@ -160,8 +252,7 @@ function initializeHamburgerMenu() {
 }
 
 // Initialize the command palette functionality
-function initializeCommandPalette() {
-  const commandPalette = document.getElementById('command-palette');
+function initializeCommandPalette() {  const commandPalette = document.getElementById('command-palette');
   const commandPaletteInput = document.getElementById('command-palette-input');
   const commandPaletteResults = document.getElementById('command-palette-results');
   
@@ -180,8 +271,37 @@ function initializeCommandPalette() {
     { id: 'toggle-theme', name: 'Toggle Dark Mode', action: () => document.getElementById('btn-theme-toggle').click() },
     { id: 'open-file', name: 'Open File', action: () => document.getElementById('btn-open').click() },
     { id: 'save-file', name: 'Save File', action: () => document.getElementById('btn-save').click() },
-    { id: 'load-demo', name: 'Load Demo', action: () => document.getElementById('btn-load-demo').click() }
+    { id: 'load-demo', name: 'Load a1test.a', action: () => loadDemo('a1test.a') }
   ];
+  
+  // Toggle command palette
+  function toggleCommandPalette() {
+    commandPalette.classList.toggle('hidden');
+    if (!commandPalette.classList.contains('hidden')) {
+      commandPaletteInput.focus();
+      commandPaletteInput.value = '';
+      commandPaletteInput.dispatchEvent(new Event('input'));
+    }
+  }
+  
+  // Keyboard shortcut for command palette (Ctrl+Shift+P)
+  document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey && event.shiftKey && event.key === 'P') {
+      event.preventDefault();
+      toggleCommandPalette();
+    }
+    
+    // Escape to close command palette
+    if (event.key === 'Escape' && !commandPalette.classList.contains('hidden')) {
+      commandPalette.classList.add('hidden');
+    }
+  });
+    // Close command palette when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!commandPalette.contains(e.target)) {
+      commandPalette.classList.add('hidden');
+    }
+  });
   
   // Handle input in the command palette
   commandPaletteInput.addEventListener('input', () => {
@@ -192,9 +312,10 @@ function initializeCommandPalette() {
     
     commandPaletteResults.innerHTML = '';
     
-    filteredCommands.forEach(cmd => {
+    filteredCommands.forEach((cmd, index) => {
       const item = document.createElement('div');
       item.className = 'command-palette-item';
+      if (index === 0) item.classList.add('active'); // Make first item active by default
       item.textContent = cmd.name;
       item.addEventListener('click', () => {
         cmd.action();
@@ -204,8 +325,7 @@ function initializeCommandPalette() {
       commandPaletteResults.appendChild(item);
     });
   });
-  
-  // Handle keyboard navigation in the command palette
+    // Handle keyboard navigation in the command palette
   commandPaletteInput.addEventListener('keydown', (event) => {
     const items = commandPaletteResults.querySelectorAll('.command-palette-item');
     const activeItem = commandPaletteResults.querySelector('.command-palette-item.active');
@@ -242,15 +362,6 @@ function initializeCommandPalette() {
         break;
     }
   });
-  
-  // Show all commands when the command palette is opened
-  const commandPaletteBtn = document.getElementById('btn-command-palette');
-  if (commandPaletteBtn) {
-    commandPaletteBtn.addEventListener('click', () => {
-      commandPaletteInput.value = '';
-      commandPaletteInput.dispatchEvent(new Event('input'));
-    });
-  }
 }
 
 // Initialize file operations (open, save)
@@ -293,12 +404,11 @@ function initializeFileOperations() {
   btnSave.addEventListener('click', () => {
     downloadFile('a');
   });
-  
-  // Mobile buttons
+    // Mobile buttons
   const btnNewMobile = document.getElementById('btn-load-demo-mobile');
   if (btnNewMobile) {
     btnNewMobile.addEventListener('click', () => {
-      loadDemo('demoA.a');
+      loadDemo('a1test.a');
       document.getElementById('hamburger-menu').classList.add('hidden');
     });
   }
@@ -318,37 +428,40 @@ function initializeDownloadOptions() {
 
 // Download file with the specified format
 function downloadFile(format) {
-  //const code = window.editor.getValue();
-  const asTxt = document.getElementById('download-as-txt').checked;
+  let code;
+  const storage = JSON.parse(localStorage['fsWrapper'] || '{}');
 
   switch (format) {
     case 'a':
-      var code = JSON.parse(localStorage['fsWrapper'])['program.a'];
+      code = storage['program.a'] || window.editor.getValue();
       break;
     case 'bst':
-      var code = JSON.parse(localStorage['fsWrapper'])['program.bst'];
+      code = storage['program.bst'] || '';
       break;
     case 'lst':
-      var code = JSON.parse(localStorage['fsWrapper'])['program.lst'];
+      code = storage['program.lst'] || '';
       break;
     case 'e':
-      var code = JSON.parse(localStorage['fsWrapper'])['program.e'];
+      code = storage['program.e'] || '';
       break;
     case 'nnn':
-      var code = JSON.parse(localStorage['fsWrapper'])['name.nnn'];
+      code = storage['name.nnn'] || '';
       break;
     default:
-      // error
       console.error('Invalid download format:', format);
       return;
   }
   
+  if (!code) {
+    appendToTerminal(`No ${format.toUpperCase()} file available. Run the program first.`, 'text-yellow-500');
+    return;
+  }
 
   const blob = new Blob([code], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `program.${format}${asTxt ? '.txt' : ''}`;
+  a.download = `program.${format}`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -394,23 +507,67 @@ function initializeThemeToggle() {
     console.error('Theme toggle element not found');
     return;
   }
-  
-  // Toggle dark mode
+    // Toggle dark mode
   btnThemeToggle.addEventListener('click', function() {
+    // Toggle dark class on both document.documentElement and body
     document.documentElement.classList.toggle('dark');
+    document.body.classList.toggle('bg-secondary-900');
+    document.body.classList.toggle('text-secondary-100');
+    
     const isDark = document.documentElement.classList.contains('dark');
     localStorage.setItem('darkMode', isDark);
+    
+    // Update icon based on dark mode status
     this.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
     
     // Update CodeMirror theme
     if (window.editor) {
       window.editor.setOption('theme', isDark ? 'lcc-dark' : 'lcc-light');
+      
+      // Refresh hover provider to adapt to the new theme
+      if (window.lccHoverProvider) {
+        // Dispose of existing hover provider and recreate it
+        window.lccHoverProvider.dispose();
+        window.lccHoverProvider = new LccHoverProvider(window.editor);
+      }
     }
+    
+    // Update all themed elements
+    const themeElements = document.querySelectorAll('[class*="bg-secondary-"], [class*="text-secondary-"], [class*="border-secondary-"]');
+    themeElements.forEach(element => {
+      // Toggle between dark and light theme classes
+      if (isDark) {
+        // Apply dark theme classes
+        element.classList.forEach(className => {
+          if (className.includes('bg-secondary-') && className.includes('-light')) {
+            const darkClass = className.replace('-light', '-dark');
+            element.classList.replace(className, darkClass);
+          }
+        });
+      } else {
+        // Apply light theme classes
+        element.classList.forEach(className => {
+          if (className.includes('bg-secondary-') && className.includes('-dark')) {
+            const lightClass = className.replace('-dark', '-light');
+            element.classList.replace(className, lightClass);
+          }
+        });
+      }
+    });
+    
+    // Hide any visible tooltips
+    const tooltips = document.querySelectorAll('.lcc-tooltip');
+    tooltips.forEach(tooltip => {
+      tooltip.style.opacity = '0';
+      setTimeout(() => {
+        tooltip.style.display = 'none';
+      }, 200);
+    });
   });
 }
 
 // Load demo files
-function loadDemo(demoFile) {
+function loadDemo(demoFile = 'a1test.a') {
   fetch(`demos/${demoFile}`)
     .then(response => response.text())
     .then(code => {
@@ -426,11 +583,120 @@ function loadDemo(demoFile) {
 const btnLoadDemo = document.getElementById('btn-load-demo');
 if (btnLoadDemo) {
   btnLoadDemo.addEventListener('click', () => {
-    loadDemo('demoA.a');
+    loadDemo('a1test.a');
   });
+}
+
+// Utility function to debug and reset hover functionality
+function resetHoverProvider() {
+  try {
+    if (window.lccHoverProvider) {
+      window.lccHoverProvider.dispose();
+    }
+    
+    if (window.editor) {
+      // Wait a brief moment to ensure DOM is ready
+      setTimeout(() => {
+        window.lccHoverProvider = new LccHoverProvider(window.editor);
+        console.log("Hover provider reset and reinstantiated");
+      }, 100);
+      return true;
+    } else {
+      console.error("Editor not found when resetting hover provider");
+      return false;
+    }
+  } catch (error) {
+    console.error("Error resetting hover provider:", error);
+    return false;
+  }
 }
 
 // Export functions for global use
 window.loadDemo = loadDemo;
 window.downloadFile = downloadFile;
 window.appendToTerminal = appendToTerminal;
+window.resetHoverProvider = resetHoverProvider;
+
+// Initialize worker message handlers
+function initializeWorkerHandlers() {
+  if (!window.worker) {
+    console.error('Worker not initialized');
+    return;
+  }
+  
+  window.worker.onmessage = function(event) {
+    const { type, data } = event.data;
+    if (type === "stdout") {
+      appendToTerminal(data);
+    } else if (type === "stderr") {
+      appendToTerminal(data, 'text-red-500');
+    } else if (type === "exit") {
+      console.log("LCC process exited with code:", data);
+      appendToTerminal(`Process exited with code: ${data}`, 'text-yellow-500');
+    } else if (type === "stdin-request") {
+      // Focus the terminal input for user input
+      const terminalInput = document.getElementById('terminal-input');
+      if (terminalInput) {
+        terminalInput.focus();
+      }
+    } else if (type === "storage") {
+      localStorage.setItem("fsWrapper", data);
+    }
+  };
+}
+
+// Initialize run button
+function initializeRunButton() {
+  const btnRun = document.getElementById('btn-run');
+  const btnRunMobile = document.getElementById('btn-run-mobile');
+  
+  const runHandler = () => {
+    // Clear terminal
+    const terminal = document.getElementById('terminal');
+    if (terminal) {
+      terminal.innerHTML = '';
+    }
+    
+    const filePath = "program.a";
+    const code = window.editor.getValue();
+    const name = "user";
+      // Reset input buffer if available
+    if (window.inputView && window.indexView) {
+      Atomics.store(window.indexView, 0, 0);
+    }
+    
+    // Send code to worker
+    window.worker.postMessage({
+      type: "run",
+      payload: { code, filePath, name }
+    });
+    
+    // Focus the terminal input after running
+    setTimeout(() => {
+      const terminalInput = document.getElementById('terminal-input');
+      if (terminalInput) {
+        terminalInput.focus();
+      }
+    }, 500);
+    
+    // On mobile, scroll to the terminal section
+    if (window.innerWidth < 768) {
+      const terminalSection = document.querySelector('.terminal').closest('.flex-1');
+      if (terminalSection) {
+        setTimeout(() => {
+          terminalSection.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  };
+  
+  if (btnRun) {
+    btnRun.addEventListener('click', runHandler);
+  } else {
+    console.error('Run button not found');
+  }
+  
+  if (btnRunMobile) {
+    btnRunMobile.addEventListener('click', runHandler);
+  }
+}
