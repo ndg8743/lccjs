@@ -424,6 +424,15 @@ function initializeDownloadOptions() {
       document.getElementById('hamburger-menu').classList.add('hidden');
     });
   });
+  
+  // Download all as TXT button
+  const btnDownloadAll = document.getElementById('btn-download-all');
+  if (btnDownloadAll) {
+    btnDownloadAll.addEventListener('click', () => {
+      downloadAllAsTxt();
+      document.getElementById('hamburger-menu').classList.add('hidden');
+    });
+  }
 }
 
 // Download file with the specified format
@@ -462,8 +471,57 @@ function downloadFile(format) {
   const a = document.createElement('a');
   a.href = url;
   a.download = `program.${format}`;
-  a.click();
-  URL.revokeObjectURL(url);
+  a.click();  URL.revokeObjectURL(url);
+}
+
+// Download all files as a single TXT file
+function downloadAllAsTxt() {
+  const storage = JSON.parse(localStorage['fsWrapper'] || '{}');
+  
+  // Get current .a file (from editor if not in storage)
+  const aCode = storage['program.a'] || window.editor.getValue();
+  const lstCode = storage['program.lst'] || '';
+  const bstCode = storage['program.bst'] || '';
+  
+  if (!aCode && !lstCode && !bstCode) {
+    appendToTerminal('No files available to download. Run the program first.', 'text-yellow-500');
+    return;
+  }
+  
+  // Create combined content
+  let combinedContent = '';
+  
+  if (aCode) {
+    combinedContent += '=== ASSEMBLY FILE (.a) ===\n';
+    combinedContent += aCode;
+    combinedContent += '\n\n';
+  }
+  
+  if (lstCode) {
+    combinedContent += '=== LISTING FILE (.lst) ===\n';
+    combinedContent += lstCode;
+    combinedContent += '\n\n';
+  }
+  
+  if (bstCode) {
+    combinedContent += '=== BINARY FILE (.bst) ===\n';
+    combinedContent += bstCode;
+    combinedContent += '\n\n';
+  }
+  
+  if (combinedContent) {
+    combinedContent += `=== GENERATED ON ===\n${new Date().toLocaleString()}\n`;
+    
+    const blob = new Blob([combinedContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'lcc_all_files.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    appendToTerminal('All files downloaded as lcc_all_files.txt', 'text-green-500');
+  }
 }
 
 // Initialize linting toggle buttons
@@ -614,6 +672,7 @@ function resetHoverProvider() {
 // Export functions for global use
 window.loadDemo = loadDemo;
 window.downloadFile = downloadFile;
+window.downloadAllAsTxt = downloadAllAsTxt;
 window.appendToTerminal = appendToTerminal;
 window.resetHoverProvider = resetHoverProvider;
 
