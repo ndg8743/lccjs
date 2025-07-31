@@ -2,17 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    @apply bg-gray-50 dark:bg-gray-900;
+  }
+  body {
+    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white;
+  }
+  #root {
+    @apply min-h-screen bg-gray-50 dark:bg-gray-900;
+  }
+}
+
 @layer components {
   .btn {
     @apply px-4 py-2 rounded-lg font-medium transition-colors;
   }
   
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700;
+    @apply bg-blue-600 text-white hover:bg-blue-700;
   }
   
   .btn-secondary {
-    @apply bg-secondary-200 text-secondary-800 hover:bg-secondary-300;
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
   }
   
   .card {
@@ -20,66 +32,66 @@
   }
   
   .input {
-    @apply w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500;
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
   }
 }
 
 /* Custom CodeMirror styling */
 .cm-s-lcc-light .cm-keyword {
-  color: #0284c7; /* primary-600 */
+  color: #2563eb; /* blue-600 */
 }
 
 .cm-s-lcc-light .cm-def {
-  color: #0369a1; /* primary-700 */
+  color: #1d4ed8; /* blue-700 */
 }
 
 .cm-s-lcc-light .cm-variable {
-  color: #1e293b; /* secondary-800 */
+  color: #1f2937; /* gray-800 */
 }
 
 .cm-s-lcc-light .cm-number {
-  color: #0c4a6e; /* primary-900 */
+  color: #1e40af; /* blue-900 */
 }
 
 .cm-s-lcc-light .cm-string {
-  color: #0ea5e9; /* primary-500 */
+  color: #3b82f6; /* blue-500 */
 }
 
 .cm-s-lcc-light .cm-comment {
-  color: #64748b; /* secondary-500 */
+  color: #6b7280; /* gray-500 */
 }
 
 .cm-s-lcc-dark .cm-keyword {
-  color: #38bdf8; /* primary-400 */
+  color: #60a5fa; /* blue-400 */
 }
 
 .cm-s-lcc-dark .cm-def {
-  color: #7dd3fc; /* primary-300 */
+  color: #93c5fd; /* blue-300 */
 }
 
 .cm-s-lcc-dark .cm-variable {
-  color: #e2e8f0; /* secondary-200 */
+  color: #e5e7eb; /* gray-200 */
 }
 
 .cm-s-lcc-dark .cm-number {
-  color: #bae6fd; /* primary-200 */
+  color: #bfdbfe; /* blue-200 */
 }
 
 .cm-s-lcc-dark .cm-string {
-  color: #0ea5e9; /* primary-500 */
+  color: #3b82f6; /* blue-500 */
 }
 
 .cm-s-lcc-dark .cm-comment {
-  color: #94a3b8; /* secondary-400 */
+  color: #9ca3af; /* gray-400 */
 }
 
 /* Command palette styling */
 .command-palette {
-  @apply fixed top-16 left-1/2 transform -translate-x-1/2 w-full max-w-2xl bg-white dark:bg-secondary-800 rounded-xl shadow-lg z-50 overflow-hidden;
+  @apply fixed top-16 left-1/2 transform -translate-x-1/2 w-full max-w-2xl bg-white dark:bg-gray-800 rounded-xl shadow-lg z-50 overflow-hidden;
 }
 
 .command-palette-input {
-  @apply w-full px-4 py-3 border-b border-secondary-200 dark:border-secondary-700 focus:outline-none;
+  @apply w-full px-4 py-3 border-b border-gray-200 dark:border-gray-700 focus:outline-none;
 }
 
 .command-palette-results {
@@ -87,79 +99,16 @@
 }
 
 .command-palette-item {
-  @apply px-4 py-2 hover:bg-secondary-100 dark:hover:bg-secondary-700 cursor-pointer flex items-center;
+  @apply px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex items-center;
 }
 
 .command-palette-item.active {
-  @apply bg-secondary-100 dark:bg-secondary-700;
+  @apply bg-gray-100 dark:bg-gray-700;
 }
 
 /* Tooltip styling for hover information */
 .tooltip {
-  @apply absolute z-10 p-3 bg-white dark:bg-secondary-800 text-secondary-800 dark:text-white text-sm rounded-lg shadow-lg border border-secondary-200 dark:border-primary-600 max-w-xs;
-  opacity: 1 !important;
-}
-
-/* LCC Assembly tooltip styling */
-.lcc-tooltip {
-  background-color: #1e293b !important;
-  border: 1px solid #38bdf8 !important;
-  border-radius: 8px !important;
-  padding: 12px !important;
-  color: #e2e8f0 !important;
-  font-size: 12px !important;
-  line-height: 1.4 !important;
-  max-width: 300px !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8) !important;
-  z-index: 10000 !important;
-  position: absolute !important;
-}
-
-.lcc-tooltip .hover-title {
-  font-weight: bold !important;
-  color: #38bdf8 !important;
-  font-size: 14px !important;
-  margin-bottom: 4px !important;
-}
-
-.lcc-tooltip .hover-syntax {
-  background-color: #334155 !important;
-  padding: 4px 6px !important;
-  border-radius: 4px !important;
-  margin: 4px 0 !important;
-  font-family: 'Fira Code', 'JetBrains Mono', monospace !important;
-}
-
-.lcc-tooltip .hover-syntax code {
-  color: #fbbf24 !important;
-  font-size: 11px !important;
-}
-
-.lcc-tooltip .hover-description {
-  color: #94a3b8 !important;
-  font-style: italic !important;
-  margin: 4px 0 !important;
-}
-
-.lcc-tooltip .hover-explanation {
-  color: #cbd5e1 !important;
-  margin: 4px 0 !important;
-}
-
-.lcc-tooltip .hover-flags {
-  color: #fbbf24 !important;
-  margin: 4px 0 !important;
-}
-
-.lcc-tooltip .hover-binary {
-  color: #a3e635 !important;
-  margin: 4px 0 !important;
-}
-
-.lcc-tooltip .hover-binary code {
-  color: #fbbf24 !important;
-  font-family: 'Fira Code', 'JetBrains Mono', monospace !important;
-  font-size: 10px !important;
+  @apply absolute z-10 p-2 bg-white dark:bg-gray-800 text-gray-800 dark:text-white text-sm rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-w-xs;
 }
 
 /* Diagnostic styling for error/warning/info */
@@ -180,27 +129,5 @@
 }
 
 .diagnostic-message {
-  @apply absolute z-10 p-2 bg-white dark:bg-secondary-800 text-secondary-800 dark:text-white text-sm rounded-lg shadow-lg border border-secondary-200 dark:border-secondary-700 max-w-xs;
-}
-
-/* Visualizer specific styles */
-.react-draggable-dragging {
-  z-index: 1000 !important;
-}
-
-.react-resizable-handle {
-  z-index: 100;
-}
-
-/* Ensure visualizer components scale properly */
-.visualizer-container {
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-
-/* Override react-rnd to ensure components stay within bounds */
-.react-draggable {
-  max-width: 100% !important;
-  max-height: 100% !important;
+  @apply absolute z-10 p-2 bg-white dark:bg-gray-800 text-gray-800 dark:text-white text-sm rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-w-xs;
 }

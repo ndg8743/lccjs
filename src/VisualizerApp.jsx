@@ -15,7 +15,7 @@ function VisualizerApp() {
   );
 }
 
-// Initialize the Visualizer application
+// Create root and render the visualizer
 const container = document.getElementById('visualizer-root');
 if (container) {
   const root = createRoot(container);

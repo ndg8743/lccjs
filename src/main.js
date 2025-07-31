@@ -1,13 +1,8 @@
 // Main application script
 import { LccLinter, LccHoverProvider } from './lcc-mode.js';
-import './tooltip-fixes.css';
-import { initializeTooltipFixer } from './tooltip-fix.js';
 
 // Initialize the application when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize tooltip fixer first
-  initializeTooltipFixer();
-  
   // Wait for the editor to be initialized
   const checkEditor = setInterval(() => {
     if (window.editor) {
@@ -239,34 +234,19 @@ function initializeHamburgerMenu() {
   const hamburgerBtn = document.getElementById('hamburger-menu-btn');
   const hamburgerMenu = document.getElementById('hamburger-menu');
   
-  console.log('Initializing hamburger menu:', { hamburgerBtn, hamburgerMenu });
-  
   if (!hamburgerBtn || !hamburgerMenu) {
-    console.error('Hamburger menu elements not found:', { hamburgerBtn, hamburgerMenu });
+    console.error('Hamburger menu elements not found');
     return;
   }
   
-  hamburgerBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('Hamburger button clicked!');
-    hamburgerMenu.classList.toggle('open');
-    console.log('Menu open state:', hamburgerMenu.classList.contains('open'));
-  });
-  
-  // Also add touch event for mobile
-  hamburgerBtn.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('Hamburger button touched!');
-    hamburgerMenu.classList.toggle('open');
-    console.log('Menu open state:', hamburgerMenu.classList.contains('open'));
+  hamburgerBtn.addEventListener('click', () => {
+    hamburgerMenu.classList.toggle('hidden');
   });
   
   // Close menu when clicking outside
   document.addEventListener('click', (e) => {
     if (!hamburgerBtn.contains(e.target) && !hamburgerMenu.contains(e.target)) {
-      hamburgerMenu.classList.remove('open');
+      hamburgerMenu.classList.add('hidden');
     }
   });
 }
@@ -429,7 +409,7 @@ function initializeFileOperations() {
   if (btnNewMobile) {
     btnNewMobile.addEventListener('click', () => {
       loadDemo('a1test.a');
-      document.getElementById('hamburger-menu').classList.remove('open');
+      document.getElementById('hamburger-menu').classList.add('hidden');
     });
   }
 }
@@ -441,7 +421,7 @@ function initializeDownloadOptions() {
     button.addEventListener('click', () => {
       const format = button.getAttribute('data-format');
       downloadFile(format);
-      document.getElementById('hamburger-menu').classList.remove('open');
+      document.getElementById('hamburger-menu').classList.add('hidden');
     });
   });
   
@@ -450,7 +430,7 @@ function initializeDownloadOptions() {
   if (btnDownloadAll) {
     btnDownloadAll.addEventListener('click', () => {
       downloadAllAsTxt();
-      document.getElementById('hamburger-menu').classList.remove('open');
+      document.getElementById('hamburger-menu').classList.add('hidden');
     });
   }
 }
@@ -459,26 +439,19 @@ function initializeDownloadOptions() {
 function downloadFile(format) {
   let code;
   const storage = JSON.parse(localStorage['fsWrapper'] || '{}');
-  
-  // Get the current file name to construct the output file names
-  const currentFileName = window.currentFileName || 'program';
-  const baseName = currentFileName.replace(/\.[^/.]+$/, ''); // Remove extension
 
   switch (format) {
     case 'a':
-      code = storage[currentFileName] || storage['program.a'] || window.editor.getValue();
+      code = storage['program.a'] || window.editor.getValue();
       break;
     case 'bst':
-      // Try multiple possible file names for .bst
-      code = storage[`${baseName}.bst`] || storage['program.bst'] || storage[`${currentFileName}.bst`] || '';
+      code = storage['program.bst'] || '';
       break;
     case 'lst':
-      // Try multiple possible file names for .lst
-      code = storage[`${baseName}.lst`] || storage['program.lst'] || storage[`${currentFileName}.lst`] || '';
+      code = storage['program.lst'] || '';
       break;
     case 'e':
-      // Try multiple possible file names for .e
-      code = storage[`${baseName}.e`] || storage['program.e'] || storage[`${currentFileName}.e`] || '';
+      code = storage['program.e'] || '';
       break;
     case 'nnn':
       code = storage['name.nnn'] || '';
@@ -488,21 +461,8 @@ function downloadFile(format) {
       return;
   }
   
-  // If no file found, check all storage keys for debugging
   if (!code) {
-    console.log('Available files in storage:', Object.keys(storage));
-    console.log(`Looking for ${format} file with baseName: ${baseName}, currentFileName: ${currentFileName}`);
-    
-    // Try to find any file with the requested extension
-    const matchingFiles = Object.keys(storage).filter(key => key.endsWith(`.${format}`));
-    if (matchingFiles.length > 0) {
-      code = storage[matchingFiles[0]];
-      console.log(`Found ${format} file: ${matchingFiles[0]}`);
-    }
-  }
-  
-  if (!code) {
-    appendToTerminal(`No ${format.toUpperCase()} file available. Run the program first to generate output files.`, 'text-yellow-500');
+    appendToTerminal(`No ${format.toUpperCase()} file available. Run the program first.`, 'text-yellow-500');
     return;
   }
 
@@ -518,24 +478,13 @@ function downloadFile(format) {
 function downloadAllAsTxt() {
   const storage = JSON.parse(localStorage['fsWrapper'] || '{}');
   
-  // Get the current file name to construct the output file names
-  const currentFileName = window.currentFileName || 'program';
-  const baseName = currentFileName.replace(/\.[^/.]+$/, ''); // Remove extension
-  
   // Get current .a file (from editor if not in storage)
-  const aCode = storage[currentFileName] || storage['program.a'] || window.editor.getValue();
+  const aCode = storage['program.a'] || window.editor.getValue();
+  const lstCode = storage['program.lst'] || '';
+  const bstCode = storage['program.bst'] || '';
   
-  // Try to find generated files with multiple possible names
-  const lstCode = storage[`${baseName}.lst`] || storage['program.lst'] || storage[`${currentFileName}.lst`] || '';
-  const bstCode = storage[`${baseName}.bst`] || storage['program.bst'] || storage[`${currentFileName}.bst`] || '';
-  const eCode = storage[`${baseName}.e`] || storage['program.e'] || storage[`${currentFileName}.e`] || '';
-  
-  // Debug: log available files
-  console.log('Available files for download:', Object.keys(storage));
-  console.log('Files found:', { aCode: !!aCode, lstCode: !!lstCode, bstCode: !!bstCode, eCode: !!eCode });
-  
-  if (!aCode && !lstCode && !bstCode && !eCode) {
-    appendToTerminal('No files available to download. Run the program first to generate output files.', 'text-yellow-500');
+  if (!aCode && !lstCode && !bstCode) {
+    appendToTerminal('No files available to download. Run the program first.', 'text-yellow-500');
     return;
   }
   
@@ -557,12 +506,6 @@ function downloadAllAsTxt() {
   if (bstCode) {
     combinedContent += '=== BINARY FILE (.bst) ===\n';
     combinedContent += bstCode;
-    combinedContent += '\n\n';
-  }
-  
-  if (eCode) {
-    combinedContent += '=== EXECUTABLE FILE (.e) ===\n';
-    combinedContent += eCode;
     combinedContent += '\n\n';
   }
   

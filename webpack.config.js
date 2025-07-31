@@ -8,7 +8,7 @@ export default {
     main: "./src/main.js",
     app: "./src/App.jsx", // New React entry point
     visualizer: "./src/VisualizerApp.jsx", // Visualizer entry point
-    resources: "./src/ResourcesApp.jsx" // Resources page entry point
+    resources: "./src/ResourcesApp.jsx" // Resources entry point
   },
   output: {
     filename: "[name].js",
