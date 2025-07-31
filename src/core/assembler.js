@@ -68,16 +68,7 @@ class Assembler {
      * Collect errors
      */
     this.errors = []; 
-
-    /**
-     * Buffer to hold machine code words
-     */
-    this.outputBuffer = []; 
-
-    /**
-     * Input file name
-     */
-    this.inputFileName = ''; 
+ 
 
     /**
      * Output file name

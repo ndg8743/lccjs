@@ -17,8 +17,13 @@ app.use((req, res, next) => {
   next();
 })
 
+// Serve index-react.html as the root page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index-react.html'));
+});
+
 // Serve static files from the current directory
-app.use(express.static(".")); // Serve files from /public
+app.use(express.static("."));
 
 // Start the server
 app.listen(PORT, () => {

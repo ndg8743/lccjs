@@ -557,72 +557,38 @@ function initializeLintingToggles() {
   });
 }
 
-// Initialize theme toggle
-function initializeThemeToggle() {
-  const btnThemeToggle = document.getElementById('btn-theme-toggle');
+// Initialize theme
+function initializeTheme() {
+  const darkMode = localStorage.getItem('darkMode');
+  const shouldBeDark = darkMode === 'true';
   
-  if (!btnThemeToggle) {
-    console.error('Theme toggle element not found');
-    return;
+  // Set initial theme
+  if (shouldBeDark) {
+    document.documentElement.classList.add('dark');
+    document.body.classList.add('bg-secondary-900');
+    document.body.classList.add('text-secondary-100');
+  } else {
+    document.documentElement.classList.remove('dark');
+    document.body.classList.remove('bg-secondary-900');
+    document.body.classList.remove('text-secondary-100');
   }
-    // Toggle dark mode
-  btnThemeToggle.addEventListener('click', function() {
-    // Toggle dark class on both document.documentElement and body
-    document.documentElement.classList.toggle('dark');
-    document.body.classList.toggle('bg-secondary-900');
-    document.body.classList.toggle('text-secondary-100');
-    
-    const isDark = document.documentElement.classList.contains('dark');
-    localStorage.setItem('darkMode', isDark);
-    
-    // Update icon based on dark mode status
-    this.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-    
-    // Update CodeMirror theme
-    if (window.editor) {
-      window.editor.setOption('theme', isDark ? 'lcc-dark' : 'lcc-light');
-      
-      // Refresh hover provider to adapt to the new theme
-      if (window.lccHoverProvider) {
-        // Dispose of existing hover provider and recreate it
-        window.lccHoverProvider.dispose();
-        window.lccHoverProvider = new LccHoverProvider(window.editor);
-      }
-    }
-    
-    // Update all themed elements
-    const themeElements = document.querySelectorAll('[class*="bg-secondary-"], [class*="text-secondary-"], [class*="border-secondary-"]');
-    themeElements.forEach(element => {
-      // Toggle between dark and light theme classes
-      if (isDark) {
-        // Apply dark theme classes
-        element.classList.forEach(className => {
-          if (className.includes('bg-secondary-') && className.includes('-light')) {
-            const darkClass = className.replace('-light', '-dark');
-            element.classList.replace(className, darkClass);
-          }
-        });
-      } else {
-        // Apply light theme classes
-        element.classList.forEach(className => {
-          if (className.includes('bg-secondary-') && className.includes('-dark')) {
-            const lightClass = className.replace('-dark', '-light');
-            element.classList.replace(className, lightClass);
-          }
-        });
-      }
-    });
-    
-    // Hide any visible tooltips
-    const tooltips = document.querySelectorAll('.lcc-tooltip');
-    tooltips.forEach(tooltip => {
-      tooltip.style.opacity = '0';
-      setTimeout(() => {
-        tooltip.style.display = 'none';
-      }, 200);
-    });
-  });
+
+  // Update theme toggle button if it exists
+  const btnThemeToggle = document.getElementById('btn-theme-toggle');
+  if (btnThemeToggle) {
+    btnThemeToggle.innerHTML = shouldBeDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+  }
+
+  // Update CodeMirror theme if editor exists
+  if (window.editor) {
+    window.editor.setOption('theme', shouldBeDark ? 'lcc-dark' : 'lcc-light');
+  }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  // ...existing initialization code...
+  initializeTheme();
+});
 
 // Load demo files
 function loadDemo(demoFile = 'a1test.a') {

@@ -1,3 +1,46 @@
+/* Base theme variables */
+:root {
+  /* Light theme defaults */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --border-color: #cbd5e1;
+  --hover-bg: #e2e8f0;
+  --code-bg: #f1f5f9;
+  --code-border: #cbd5e1;
+}
+
+:root.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --border-color: #334155;
+  --hover-bg: #334155;
+  --code-bg: #0f172a;
+  --code-border: #334155;
+}
+
+/* Base element styles */
+html, body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+#root {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Theme transition */
+body, #root, .btn, .card, .input {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
 /* CodeMirror styling */
 .CodeMirror {
   height: 100%;
