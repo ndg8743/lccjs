@@ -29,6 +29,7 @@ function EditorPanel() {
     EditorView.theme({
       '&': {
         fontSize: '14px',
+        height: '100%',
       },
       '.cm-content': {
         padding: '16px',
@@ -39,9 +40,13 @@ function EditorPanel() {
       },
       '.cm-editor': {
         height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
       },
       '.cm-scroller': {
         fontFamily: '"Fira Code", "JetBrains Mono", "Monaco", "Consolas", monospace',
+        flex: 1,
+        overflow: 'auto',
       },
     }),
     EditorView.lineWrapping,
@@ -62,24 +67,26 @@ function EditorPanel() {
 
   return (
     <motion.div 
-      className="flex flex-col h-full"
+      className="flex flex-col h-full editor-panel"
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, delay: 0.1 }}
     >
       {/* Editor header */}
-      <div className="flex justify-between items-center p-4 bg-secondary-800 border-b border-secondary-700">
-        <h2 className="text-lg font-semibold text-primary-400">Editor</h2>
+      <div className="flex justify-between items-center p-3 bg-secondary-800 border-b border-secondary-700 flex-shrink-0">
+        <h2 className="text-base font-semibold text-primary-400 flex items-center">
+          <i className="fas fa-code mr-2 text-primary-400" />
+          Editor
+        </h2>
         <div className="flex items-center space-x-2">
           <span className="text-sm text-secondary-400">
             {currentFileName}
           </span>
-          {/* File tabs could go here in the future */}
         </div>
       </div>
 
       {/* Editor content */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative min-h-0">
         <CodeMirror
           ref={editorRef}
           value={editorContent}
@@ -109,7 +116,7 @@ function EditorPanel() {
       </div>
 
       {/* Editor status bar */}
-      <div className="flex justify-between items-center px-4 py-2 bg-secondary-800 border-t border-secondary-700 text-sm text-secondary-400">
+      <div className="flex justify-between items-center px-3 py-2 bg-secondary-800 border-t border-secondary-700 text-xs text-secondary-400 flex-shrink-0">
         <div className="flex items-center space-x-4">
           <span>Lines: {editorContent.split('\n').length}</span>
           <span>Characters: {editorContent.length}</span>

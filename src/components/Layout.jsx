@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useApp } from '../store/AppStore';
 import Header from './Header';
@@ -17,16 +17,23 @@ import MobileLayout from './MobileLayout';
 function Layout() {
   const { isDarkMode, isCommandPaletteOpen } = useApp();
   const [isMobile, setIsMobile] = useState(false);
+  const [isWideScreen, setIsWideScreen] = useState(false);
+  const [editorHeight, setEditorHeight] = useState(60); // Percentage for vertical layout
+  const [editorWidth, setEditorWidth] = useState(60); // Percentage for horizontal layout
+  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef(null);
 
-  // Check for mobile screen size
+  // Check for mobile and wide screen sizes
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768); // md breakpoint
+    const checkScreenSize = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 768); // md breakpoint
+      setIsWideScreen(width >= 1280); // xl breakpoint for side-by-side
     };
     
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
   // Apply theme class to document
@@ -36,6 +43,64 @@ function Layout() {
       ? 'bg-secondary-900 text-secondary-100 min-h-screen'
       : 'bg-gray-50 text-gray-900 min-h-screen';
   }, [isDarkMode]);
+
+  // Handle mouse events for dragging (vertical layout)
+  const handleVerticalMouseDown = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  const handleVerticalMouseMove = (e) => {
+    if (!isDragging || !containerRef.current || isWideScreen) return;
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const newHeight = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+    
+    // Constrain to reasonable bounds (20% - 80%)
+    const constrainedHeight = Math.max(20, Math.min(80, newHeight));
+    setEditorHeight(constrainedHeight);
+  };
+
+  // Handle mouse events for dragging (horizontal layout)
+  const handleHorizontalMouseDown = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  const handleHorizontalMouseMove = (e) => {
+    if (!isDragging || !containerRef.current || !isWideScreen) return;
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+    
+    // Constrain to reasonable bounds (30% - 70%)
+    const constrainedWidth = Math.max(30, Math.min(70, newWidth));
+    setEditorWidth(constrainedWidth);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  };
+
+  // Add global mouse event listeners
+  useEffect(() => {
+    if (isDragging) {
+      const handleMouseMove = isWideScreen ? handleHorizontalMouseMove : handleVerticalMouseMove;
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, isWideScreen]);
 
   // Use mobile layout for small screens
   if (isMobile) {
@@ -70,27 +135,83 @@ function Layout() {
           <FileExplorer />
         </motion.div>
         
-        {/* Editor and Terminal */}
-        <div className="flex-1 flex flex-col xl:flex-row overflow-hidden">
-          {/* Editor Panel */}
-          <motion.div 
-            className="flex-1 flex flex-col min-h-0"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
-            <EditorPanel />
-          </motion.div>
-          
-          {/* Terminal Panel */}
-          <motion.div 
-            className="flex-1 flex flex-col min-h-0 xl:max-w-md xl:border-l xl:border-secondary-700"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.3 }}
-          >
-            <TerminalPanel />
-          </motion.div>
+        {/* Editor and Terminal Container */}
+        <div 
+          ref={containerRef}
+          className="flex-1 overflow-hidden"
+          style={{ cursor: isDragging ? (isWideScreen ? 'col-resize' : 'row-resize') : 'default' }}
+        >
+          {isWideScreen ? (
+            // Horizontal layout (side by side)
+            <div className="flex h-full">
+              {/* Editor Panel - Fixed width based on drag */}
+              <motion.div 
+                className="flex flex-col min-h-0"
+                style={{ width: `${editorWidth}%` }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+              >
+                <EditorPanel />
+              </motion.div>
+              
+              {/* Vertical Resizable Splitter */}
+              <div
+                className="w-1 bg-secondary-600 hover:bg-primary-400 cursor-col-resize transition-colors duration-200 relative group"
+                onMouseDown={handleHorizontalMouseDown}
+              >
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="h-8 w-1 bg-secondary-500 rounded-full group-hover:bg-primary-400 transition-colors duration-200"></div>
+                </div>
+              </div>
+              
+              {/* Terminal Panel - Fixed width based on drag */}
+              <motion.div 
+                className="flex flex-col min-h-0"
+                style={{ width: `${100 - editorWidth}%` }}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
+              >
+                <TerminalPanel />
+              </motion.div>
+            </div>
+          ) : (
+            // Vertical layout (stacked)
+            <div className="flex flex-col h-full">
+              {/* Editor Panel - Fixed height based on drag */}
+              <motion.div 
+                className="flex flex-col min-h-0"
+                style={{ height: `${editorHeight}%` }}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+              >
+                <EditorPanel />
+              </motion.div>
+              
+              {/* Horizontal Resizable Splitter */}
+              <div
+                className="h-1 bg-secondary-600 hover:bg-primary-400 cursor-row-resize transition-colors duration-200 relative group"
+                onMouseDown={handleVerticalMouseDown}
+              >
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-8 h-1 bg-secondary-500 rounded-full group-hover:bg-primary-400 transition-colors duration-200"></div>
+                </div>
+              </div>
+              
+              {/* Terminal Panel - Fixed height based on drag */}
+              <motion.div 
+                className="flex flex-col min-h-0"
+                style={{ height: `${100 - editorHeight}%` }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
+              >
+                <TerminalPanel />
+              </motion.div>
+            </div>
+          )}
         </div>
       </main>
       

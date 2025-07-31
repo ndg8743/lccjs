@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import PropTypes from 'prop-types';
 
@@ -26,6 +26,11 @@ function Button({
   title,
   ...props
 }) {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef(null);
+  const tooltipRef = useRef(null);
+
   const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
   
   const variantClasses = {
@@ -53,22 +58,83 @@ function Button({
     ${className}
   `.trim();
 
+  // Handle tooltip positioning
+  const handleMouseEnter = () => {
+    if (title && !disabled) {
+      setShowTooltip(true);
+      // Position tooltip after a short delay to ensure button is rendered
+      setTimeout(() => {
+        if (buttonRef.current && tooltipRef.current) {
+          const buttonRect = buttonRef.current.getBoundingClientRect();
+          const tooltipRect = tooltipRef.current.getBoundingClientRect();
+          
+          let top = buttonRect.bottom + 8;
+          let left = buttonRect.left + (buttonRect.width / 2) - (tooltipRect.width / 2);
+          
+          // Adjust if tooltip would go off screen
+          if (left < 8) left = 8;
+          if (left + tooltipRect.width > window.innerWidth - 8) {
+            left = window.innerWidth - tooltipRect.width - 8;
+          }
+          if (top + tooltipRect.height > window.innerHeight - 8) {
+            top = buttonRect.top - tooltipRect.height - 8;
+          }
+          
+          setTooltipPosition({ top, left });
+        }
+      }, 100);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setShowTooltip(false);
+  };
+
+  // Clean up tooltip on unmount
+  useEffect(() => {
+    return () => {
+      setShowTooltip(false);
+    };
+  }, []);
+
   return (
-    <motion.button
-      className={buttonClasses}
-      onClick={disabled ? undefined : onClick}
-      disabled={disabled}
-      title={title}
-      whileHover={disabled ? {} : { scale: 1.02 }}
-      whileTap={disabled ? {} : { scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      {...props}
-    >
-      {icon && (
-        <i className={`${icon} ${children ? 'mr-2' : ''}`} />
+    <>
+      <motion.button
+        ref={buttonRef}
+        className={buttonClasses}
+        onClick={disabled ? undefined : onClick}
+        disabled={disabled}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        whileHover={disabled ? {} : { scale: 1.02 }}
+        whileTap={disabled ? {} : { scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        {...props}
+      >
+        {icon && (
+          <i className={`${icon} ${children ? 'mr-2' : ''}`} />
+        )}
+        {children}
+      </motion.button>
+      
+      {/* Tooltip */}
+      {title && (
+        <motion.div
+          ref={tooltipRef}
+          className="fixed z-50 px-3 py-2 text-sm text-white bg-secondary-800 border border-secondary-600 rounded-lg shadow-lg pointer-events-none max-w-xs"
+          style={{
+            top: tooltipPosition.top,
+            left: tooltipPosition.left,
+          }}
+          initial={{ opacity: 0, y: 5 }}
+          animate={showTooltip ? { opacity: 1, y: 0 } : { opacity: 0, y: 5 }}
+          transition={{ duration: 0.2 }}
+        >
+          {title}
+          <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-secondary-800 border-l border-t border-secondary-600 rotate-45"></div>
+        </motion.div>
       )}
-      {children}
-    </motion.button>
+    </>
   );
 }
 

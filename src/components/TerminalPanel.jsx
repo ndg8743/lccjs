@@ -77,21 +77,24 @@ function TerminalPanel() {
 
   return (
     <motion.div 
-      className="flex flex-col h-full"
+      className="flex flex-col h-full terminal-panel"
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, delay: 0.2 }}
     >
       {/* Terminal header */}
-      <div className="flex justify-between items-center p-4 bg-secondary-800 border-b border-secondary-700">
-        <h2 className="text-lg font-semibold text-primary-400">Terminal</h2>
+      <div className="flex justify-between items-center p-3 bg-secondary-800 border-b border-secondary-700 flex-shrink-0">
+        <h2 className="text-base font-semibold text-primary-400 flex items-center">
+          <i className="fas fa-terminal mr-2 text-primary-400" />
+          Terminal
+        </h2>
         <div className="flex space-x-2">
           <Button
             variant="secondary"
             size="sm"
             onClick={clearTerminalOutput}
             icon="fas fa-trash-alt"
-            title="Clear Terminal"
+            title="Clear terminal output"
           >
             Clear
           </Button>
@@ -103,7 +106,7 @@ function TerminalPanel() {
         {/* Output area */}
         <div 
           ref={terminalRef}
-          className="flex-1 overflow-y-auto p-4 bg-secondary-900 font-mono text-sm leading-relaxed"
+          className="flex-1 overflow-y-auto p-3 bg-secondary-900 font-mono text-sm leading-relaxed min-h-0"
         >
           <AnimatePresence>
             {terminalOutput.map((output, index) => (
@@ -138,7 +141,7 @@ function TerminalPanel() {
         {/* Input area */}
         <form 
           onSubmit={handleSubmit}
-          className="border-t border-secondary-700 p-2 bg-secondary-800"
+          className="border-t border-secondary-700 p-2 bg-secondary-800 flex-shrink-0"
         >
           <div className="flex items-center space-x-2">
             <span className="text-primary-400 font-mono text-sm">$</span>
@@ -164,15 +167,18 @@ function TerminalPanel() {
       </div>
 
       {/* Terminal status */}
-      <div className="flex justify-between items-center px-4 py-2 bg-secondary-800 border-t border-secondary-700 text-xs text-secondary-400">
-        <div>
-          Lines: {terminalOutput.length}
+      <div className="flex justify-between items-center px-3 py-2 bg-secondary-800 border-t border-secondary-700 text-xs text-secondary-400 flex-shrink-0">
+        <div className="flex items-center space-x-2">
+          <span>Lines: {terminalOutput.length}</span>
+          {isWaitingForInput && (
+            <span className="text-yellow-400 flex items-center">
+              <i className="fas fa-clock mr-1" />
+              Waiting for input...
+            </span>
+          )}
         </div>
         <div className="flex items-center space-x-2">
-          {isWaitingForInput && (
-            <span className="text-yellow-400">Waiting for input...</span>
-          )}
-          <span>Ready</span>
+          <span className="text-green-400">Ready</span>
         </div>
       </div>
     </motion.div>

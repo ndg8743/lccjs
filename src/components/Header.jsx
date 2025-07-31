@@ -33,11 +33,11 @@ function Header() {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.2 }}
     >
-      <div className="container mx-auto px-8 py-6 flex justify-between items-center min-w-0">
+      <div className="container mx-auto px-6 py-4 flex justify-between items-center min-w-0">
         {/* Left side - Logo and main actions */}
-        <div className="flex items-center space-x-8 min-w-0 flex-1">
+        <div className="flex items-center space-x-6 min-w-0 flex-1">
           <motion.h1 
-            className="text-3xl font-bold text-primary-400 flex-shrink-0"
+            className="text-2xl font-bold text-primary-400 flex-shrink-0"
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
@@ -46,7 +46,7 @@ function Header() {
           
           {/* Current file indicator - responsive */}
           <motion.div 
-            className="hidden sm:block text-lg text-secondary-300 truncate min-w-0 flex-1 px-6 py-3 bg-secondary-700 rounded-lg"
+            className="hidden sm:block text-base text-secondary-300 truncate min-w-0 flex-1 px-4 py-2 bg-secondary-700 rounded-lg"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -57,24 +57,26 @@ function Header() {
           </motion.div>
           
           {/* Desktop action buttons */}
-          <div className="hidden md:flex space-x-4 flex-shrink-0">
+          <div className="hidden md:flex space-x-3 flex-shrink-0">
             <Button
               variant="primary"
-              size="lg"
+              size="md"
               onClick={handleRun}
               disabled={isProcessing}
               icon="fas fa-play"
-              className="px-8"
+              title={isProcessing ? "Program is running..." : "Run the current program"}
+              className="px-6"
             >
               {isProcessing ? 'Running...' : 'Run Program'}
             </Button>
             
             <Button
               variant="secondary"
-              size="lg"
+              size="md"
               onClick={handleLoadDemo}
               icon="fas fa-file-code"
-              className="px-8"
+              title="Load demo file (a1test.a)"
+              className="px-6"
             >
               Load Demo
             </Button>
@@ -82,24 +84,24 @@ function Header() {
         </div>
 
         {/* Right side - Theme toggle and menu */}
-        <div className="flex items-center space-x-4 flex-shrink-0">
+        <div className="flex items-center space-x-3 flex-shrink-0">
           {/* Theme toggle button */}
           <Button
             variant="secondary"
-            size="lg"
+            size="md"
             onClick={toggleDarkMode}
             icon={isDarkMode ? "fas fa-sun" : "fas fa-moon"}
             title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            className="transition-transform hover:scale-110 px-6"
+            className="transition-transform hover:scale-110 px-4"
           />
           
           {/* Hamburger menu button */}
           <Button
             variant="secondary"
-            size="lg"
+            size="md"
             onClick={toggleHamburgerMenu}
             icon="fas fa-bars"
-            title="Menu"
+            title="Open menu"
             className="transition-transform hover:scale-110 px-4"
           />
         </div>
