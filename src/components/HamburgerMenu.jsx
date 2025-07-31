@@ -11,42 +11,53 @@ function HamburgerMenu() {
   const { 
     isHamburgerMenuOpen, 
     toggleHamburgerMenu,
-    isProcessing
+    isProcessing,
+    runProgram,
+    loadDemoFile,
+    addFile,
+    downloadAllFiles,
+    downloadFile,
+    currentFileName,
+    addTerminalOutput,
+    openFiles
   } = useApp();
 
-  const handleRun = () => {
-    // TODO: Implement run functionality
-    console.log('Run button clicked');
+  const handleRun = async () => {
+    await runProgram();
     toggleHamburgerMenu();
   };
 
-  const handleLoadDemo = () => {
-    // TODO: Implement demo loading
-    console.log('Load demo clicked');
+  const handleLoadDemo = async () => {
+    await loadDemoFile('a1test.a');
     toggleHamburgerMenu();
   };
 
   const handleNewFile = () => {
-    // TODO: Implement new file
-    console.log('New file clicked');
+    const fileName = prompt('Enter file name (e.g., program.a):');
+    if (fileName && fileName.trim()) {
+      addFile(fileName.trim(), '');
+      addTerminalOutput(`Created new file: ${fileName.trim()}`, 'text-green-400');
+    }
     toggleHamburgerMenu();
   };
 
   const handleOpenFile = () => {
-    // TODO: Implement open file
-    console.log('Open file clicked');
+    addTerminalOutput('File picker not implemented yet. Use the upload button in the file explorer.', 'text-yellow-400');
     toggleHamburgerMenu();
   };
 
   const handleSaveFile = () => {
-    // TODO: Implement save file
-    console.log('Save file clicked');
+    addTerminalOutput('File saved automatically as you type.', 'text-blue-400');
     toggleHamburgerMenu();
   };
 
   const handleDownloadAll = () => {
-    // TODO: Implement download all
-    console.log('Download all clicked');
+    downloadAllFiles();
+    toggleHamburgerMenu();
+  };
+
+  const handleDownload = (extension) => {
+    downloadFile(currentFileName, extension);
     toggleHamburgerMenu();
   };
 
@@ -81,9 +92,25 @@ function HamburgerMenu() {
     },
     { type: 'divider' },
     {
+      label: 'Download .a',
+      icon: 'fas fa-download',
+      onClick: () => handleDownload('.a'),
+    },
+    {
+      label: 'Download .lst',
+      icon: 'fas fa-download',
+      onClick: () => handleDownload('.lst'),
+    },
+    {
+      label: 'Download .bst',
+      icon: 'fas fa-download',
+      onClick: () => handleDownload('.bst'),
+    },
+    {
       label: 'Download All',
       icon: 'fas fa-download',
       onClick: handleDownloadAll,
+      disabled: openFiles.length === 0
     },
   ];
 
@@ -102,32 +129,33 @@ function HamburgerMenu() {
           
           {/* Menu panel */}
           <motion.div
-            className="fixed top-0 right-0 h-full w-80 max-w-full bg-secondary-800 shadow-xl z-50 border-l border-secondary-700"
+            className="fixed top-0 right-0 h-full w-80 max-w-full bg-secondary-800 shadow-2xl z-50 border-l border-secondary-700"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
           >
             {/* Header */}
-            <div className="flex justify-between items-center p-4 border-b border-secondary-700">
-              <h2 className="text-lg font-semibold text-secondary-100">Menu</h2>
+            <div className="flex justify-between items-center p-6 border-b border-secondary-700">
+              <h2 className="text-xl font-semibold text-secondary-100">Menu</h2>
               <Button
                 variant="ghost"
-                size="sm"
+                size="md"
                 onClick={toggleHamburgerMenu}
                 icon="fas fa-times"
                 title="Close Menu"
+                className="p-2"
               />
             </div>
             
             {/* Menu items */}
-            <div className="flex flex-col p-4 space-y-2">
+            <div className="flex flex-col p-6 space-y-3">
               {menuItems.map((item, index) => {
                 if (item.type === 'divider') {
                   return (
                     <motion.div
                       key={`divider-${index}`}
-                      className="border-t border-secondary-700 my-2"
+                      className="border-t border-secondary-700 my-4"
                       initial={{ scaleX: 0 }}
                       animate={{ scaleX: 1 }}
                       transition={{ delay: index * 0.05 }}
@@ -144,11 +172,11 @@ function HamburgerMenu() {
                   >
                     <Button
                       variant={item.variant || 'ghost'}
-                      size="md"
+                      size="lg"
                       onClick={item.onClick}
                       disabled={item.disabled}
                       icon={item.icon}
-                      className="w-full justify-start"
+                      className="w-full justify-start px-6 py-4 text-left"
                     >
                       {item.label}
                     </Button>
@@ -158,8 +186,8 @@ function HamburgerMenu() {
             </div>
             
             {/* Footer */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-secondary-700">
-              <div className="text-center text-xs text-secondary-400">
+            <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-secondary-700">
+              <div className="text-center text-sm text-secondary-400">
                 LCC.js - Educational Assembly IDE
               </div>
             </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { AppProvider } from './store/AppStore';
 import Layout from './components/Layout';
+import AppInitializer from './components/AppInitializer';
 import './styles.css';
 
 /**
@@ -11,6 +12,7 @@ import './styles.css';
 function App() {
   return (
     <AppProvider>
+      <AppInitializer />
       <Layout />
     </AppProvider>
   );

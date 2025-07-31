@@ -62,10 +62,10 @@ function Layout() {
       <main className="flex-1 flex overflow-hidden">
         {/* File Explorer - Resizable sidebar */}
         <motion.div 
-          className="w-64 border-r border-secondary-700 bg-secondary-800 flex-shrink-0"
+          className="border-r border-secondary-700 bg-secondary-800 flex-shrink-0"
           initial={{ width: 0, opacity: 0 }}
-          animate={{ width: 256, opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
+          animate={{ width: 'auto', opacity: 1 }}
+          transition={{ duration: 0.2, delay: 0.1 }}
         >
           <FileExplorer />
         </motion.div>
