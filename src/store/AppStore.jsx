@@ -405,7 +405,7 @@ export function useApp() {
   if (!store) {
     throw new Error('useApp must be used within AppProvider');
   }
-  return store;
+  return store();
 }
 
 export default useAppStore;

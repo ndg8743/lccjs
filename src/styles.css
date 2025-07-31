@@ -7,9 +7,9 @@
     @apply bg-gray-50 dark:bg-gray-900;
   }
   body {
-    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white;
+    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen;
   }
-  #root {
+  #root, #react-root {
     @apply min-h-screen bg-gray-50 dark:bg-gray-900;
   }
 }
@@ -130,4 +130,37 @@
 
 .diagnostic-message {
   @apply absolute z-10 p-2 bg-white dark:bg-gray-800 text-gray-800 dark:text-white text-sm rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-w-xs;
+}
+
+/* Visualizer specific styles */
+.visualizer-container {
+  @apply w-full h-full bg-gray-900;
+}
+
+/* Stack visualization styles */
+.stack-item {
+  @apply px-4 py-2 border border-gray-700 bg-gray-800 text-white;
+}
+
+/* Memory panel styles */
+.memory-cell {
+  @apply px-2 py-1 text-xs font-mono;
+}
+
+/* React Draggable fixes */
+.react-draggable-dragging {
+  z-index: 1000 !important;
+}
+
+.react-resizable-handle {
+  z-index: 999 !important;
+}
+
+/* Resources page styles */
+.resource-card {
+  @apply bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow;
+}
+
+.resource-button {
+  @apply inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors;
 }

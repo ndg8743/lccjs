@@ -16,6 +16,14 @@ import ExecutionControls from '../components/visualizer/ExecutionControls';
 function StackToolPage() {
   const { isDarkMode } = useApp();
   
+  // Apply dark mode to HTML element
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    document.body.className = isDarkMode 
+      ? 'bg-gray-900 text-gray-100 min-h-screen'
+      : 'bg-gray-50 text-gray-900 min-h-screen';
+  }, [isDarkMode]);
+  
   // Core state
   const [code, setCode] = useState('');
   const [currentLine, setCurrentLine] = useState(0);
@@ -658,12 +666,20 @@ function StackToolPage() {
   return (
     <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} overflow-hidden`}>
       {/* Header */}
-      <div className="h-12 bg-gray-800 px-4 flex items-center justify-between flex-shrink-0">
-        <h1 className="text-xl font-bold text-primary-500">LCC Stack Visualizer</h1>
+      <div className={`h-12 px-4 flex items-center justify-between flex-shrink-0 ${
+        isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-300'
+      } border-b`}>
+        <h1 className={`text-xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+          LCC Stack Visualizer
+        </h1>
         <div className="flex items-center space-x-4">
           <button
             onClick={() => window.location.href = '/'}
-            className="text-gray-400 hover:text-white transition-colors"
+            className={`px-3 py-1 rounded-md transition-colors ${
+              isDarkMode
+                ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+            }`}
           >
             <i className="fas fa-arrow-left mr-2"></i>
             Back to IDE
@@ -692,7 +708,9 @@ function StackToolPage() {
             className="bg-gray-800 rounded-lg overflow-hidden shadow-xl"
           >
             <div className="h-full flex flex-col">
-              <div className="bg-gray-700 px-4 py-2 text-sm font-semibold cursor-move">
+              <div className={`px-4 py-2 text-sm font-semibold cursor-move ${
+                isDarkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-200 text-gray-800'
+              }`}>
                 CODE EDITOR
               </div>
               <div className="flex-1 overflow-hidden">

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useApp } from '../store/AppStore';
 
@@ -7,6 +7,14 @@ import { useApp } from '../store/AppStore';
  */
 function ResourcesPage() {
   const { isDarkMode } = useApp();
+
+  // Apply dark mode to HTML element
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    document.body.className = isDarkMode 
+      ? 'bg-gray-900 text-gray-100 min-h-screen'
+      : 'bg-gray-50 text-gray-900 min-h-screen';
+  }, [isDarkMode]);
 
   const resources = [
     {
@@ -203,7 +211,24 @@ function ResourcesPage() {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
+      {/* Back to IDE Button */}
+      <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b`}>
+        <div className="container mx-auto px-4 py-3">
+          <a
+            href="/"
+            className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm transition-colors ${
+              isDarkMode 
+                ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <i className="fas fa-arrow-left mr-2"></i>
+            Back to IDE
+          </a>
+        </div>
+      </div>
+      
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <motion.div
@@ -212,10 +237,10 @@ function ResourcesPage() {
           transition={{ duration: 0.5 }}
           className="mb-8"
         >
-          <h1 className="text-4xl font-bold text-primary-500 mb-4">
+          <h1 className={`text-4xl font-bold mb-4 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
             LCC Learning Resources
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
+          <p className={`text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Download tools, read documentation, and explore tutorials to master LCC assembly programming
           </p>
         </motion.div>
@@ -232,7 +257,7 @@ function ResourcesPage() {
               variants={itemVariants}
               className="mb-8"
             >
-              <h2 className="text-2xl font-semibold mb-4 text-primary-400">
+              <h2 className={`text-2xl font-semibold mb-4 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
                 {section.category}
               </h2>
               
@@ -251,7 +276,7 @@ function ResourcesPage() {
                         <div className={`p-3 rounded-lg ${
                           isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
                         }`}>
-                          <i className={`${item.icon} text-2xl text-primary-500`}></i>
+                          <i className={`${item.icon} text-2xl ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`}></i>
                         </div>
                         
                         <div className="flex-1">
@@ -274,11 +299,7 @@ function ResourcesPage() {
                           {item.filename ? (
                             <motion.button
                               onClick={() => handleDownload(item.filename)}
-                              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                                isDarkMode
-                                  ? 'bg-primary-600 hover:bg-primary-700 text-white'
-                                  : 'bg-primary-500 hover:bg-primary-600 text-white'
-                              }`}
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                             >
@@ -319,8 +340,8 @@ function ResourcesPage() {
             isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
           }`}
         >
-          <h3 className="text-lg font-semibold mb-3">
-            <i className="fas fa-info-circle mr-2 text-primary-500"></i>
+          <h3 className={`text-lg font-semibold mb-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+            <i className={`fas fa-info-circle mr-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`}></i>
             Getting Started with LCC
           </h3>
           <ol className={`list-decimal list-inside space-y-2 ${

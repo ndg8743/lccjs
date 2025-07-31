@@ -22,6 +22,27 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index-react.html'));
 });
 
+// Serve visualizer page
+app.get('/visualizer', (req, res) => {
+  res.sendFile(path.join(__dirname, 'visualizer.html'));
+});
+
+// Serve resources page
+app.get('/resources', (req, res) => {
+  res.sendFile(path.join(__dirname, 'resources.html'));
+});
+
+// Serve demo files with proper CORS headers
+app.get('/demos/:filename', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.sendFile(path.join(__dirname, 'demos', req.params.filename));
+});
+
+// Serve LCC packages and files
+app.get('/lcc_packages+files/:filename', (req, res) => {
+  res.sendFile(path.join(__dirname, 'lcc_packages+files', req.params.filename));
+});
+
 // Serve static files from the current directory
 app.use(express.static("."));
 
