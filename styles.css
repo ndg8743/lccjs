@@ -343,27 +343,31 @@ body, #root, .btn, .card, .input {
 
 /* LCC Tooltip styling */
 .lcc-tooltip {
-  position: fixed;
+  position: absolute;
   z-index: 10000;
-  max-width: 300px;
-  background: #1e293b;
-  border: 1px solid #38bdf8;
-  border-radius: 8px;
-  padding: 12px;
+  min-width: 320px;
+  max-width: 450px;
+  background-color: #000000 !important;
+  background-image: none !important;
+  border: 2px solid #38bdf8 !important;
+  border-radius: 12px;
+  padding: 20px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 12px;
-  line-height: 1.4;
-  color: #e2e8f0;
-  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.2), 
-              0 8px 10px -6px rgba(0, 0, 0, 0.1),
-              0 0 0 1px rgba(56, 189, 248, 0.2);
-  display: none;
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #ffffff !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 1), 
+              0 10px 20px -5px rgba(0, 0, 0, 0.8),
+              0 0 0 1px rgba(56, 189, 248, 0.5) !important;
+  display: block !important;
+  opacity: 1 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   transform: translateY(0);
-  top: 0;
-  left: 0;
+  margin-top: 10px;
+  margin-left: 10px;
+  filter: none !important;
+  backdrop-filter: none !important;
 }
 
 /* Add a slight animation when showing */
@@ -371,21 +375,87 @@ body, #root, .btn, .card, .input {
   transform: translateY(-3px);
 }
 
+/* Responsive tooltip adjustments */
+@media (max-width: 768px) {
+  .lcc-tooltip {
+    min-width: 280px;
+    max-width: 350px;
+    padding: 16px;
+    font-size: 13px;
+  }
+  
+  .lcc-tooltip .hover-title {
+    font-size: 16px;
+    margin-bottom: 14px;
+  }
+  
+  .lcc-tooltip .hover-syntax,
+  .lcc-tooltip .hover-binary {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+}
+
+/* Ensure tooltip positioning works correctly */
+.cm-tooltip {
+  position: absolute !important;
+  z-index: 10000 !important;
+}
+
+.cm-tooltip .lcc-tooltip {
+  position: relative !important;
+  margin: 0 !important;
+}
+
+/* Ensure tooltip has no transparency */
+.lcc-tooltip,
+.lcc-tooltip * {
+  background-color: #000000 !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+  background-image: none !important;
+}
+
+/* Override any CodeMirror tooltip transparency */
+.cm-tooltip,
+.cm-tooltip * {
+  background-color: #000000 !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+  background-image: none !important;
+}
+
+/* Ensure tooltip is always visible */
+.lcc-tooltip {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
 .lcc-tooltip .hover-title {
-  font-weight: 600;
+  font-weight: 700;
   color: #38bdf8;
-  margin-bottom: 8px;
-  font-size: 14px;
+  margin-bottom: 16px;
+  font-size: 18px;
+  letter-spacing: 0.025em;
+  line-height: 1.4;
 }
 
 .lcc-tooltip .hover-syntax {
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  padding: 6px 8px;
-  margin-bottom: 10px;
+  background-color: #111111 !important;
+  background-image: none !important;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
   font-family: 'Fira Code', monospace;
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  opacity: 1 !important;
+  filter: none !important;
 }
 
 .lcc-tooltip .hover-syntax code {
@@ -395,33 +465,43 @@ body, #root, .btn, .card, .input {
 }
 
 .lcc-tooltip .hover-description {
-  color: #cbd5e1;
-  margin-bottom: 8px;
-  font-weight: 500;
+  color: #e2e8f0;
+  margin-bottom: 14px;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .lcc-tooltip .hover-explanation {
-  color: #94a3b8;
-  margin-bottom: 8px;
-  font-size: 11px;
-  line-height: 1.5;
+  color: #cbd5e1;
+  margin-bottom: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  font-style: italic;
 }
 
 .lcc-tooltip .hover-flags {
   color: #fbbf24;
-  margin-bottom: 8px;
+  margin-bottom: 14px;
   font-family: 'Fira Code', monospace;
-  font-size: 11px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .lcc-tooltip .hover-binary {
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  padding: 6px 8px;
+  background-color: #111111 !important;
+  background-image: none !important;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  padding: 12px 14px;
   font-family: 'Fira Code', monospace;
-  font-size: 11px;
+  font-size: 13px;
   color: #7dd3fc;
+  font-weight: 500;
+  line-height: 1.5;
+  opacity: 1 !important;
+  filter: none !important;
 }
 
 .lcc-tooltip .hover-binary code {
