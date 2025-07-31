@@ -22,22 +22,6 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index-react.html'));
 });
 
-// Serve visualizer page
-app.get('/visualizer', (req, res) => {
-  res.sendFile(path.join(__dirname, 'visualizer.html'));
-});
-
-// Serve resources page
-app.get('/resources', (req, res) => {
-  res.sendFile(path.join(__dirname, 'resources.html'));
-});
-
-// Serve demo files
-app.get('/demos/:filename', (req, res) => {
-  const filename = req.params.filename;
-  res.sendFile(path.join(__dirname, 'demos', filename));
-});
-
 // Serve static files from the current directory
 app.use(express.static("."));
 
