@@ -8,6 +8,7 @@ import './styles.css';
  * Resources application entry point
  */
 function ResourcesApp() {
+  console.log('ResourcesApp: Rendering component');
   return (
     <AppProvider>
       <ResourcesPage />
@@ -16,12 +17,21 @@ function ResourcesApp() {
 }
 
 // Initialize the Resources application
+console.log('ResourcesApp: Starting initialization');
 const container = document.getElementById('resources-root');
+console.log('ResourcesApp: Container found:', container);
+
 if (container) {
-  const root = createRoot(container);
-  root.render(<ResourcesApp />);
+  try {
+    const root = createRoot(container);
+    console.log('ResourcesApp: Root created, rendering...');
+    root.render(<ResourcesApp />);
+    console.log('ResourcesApp: Render complete');
+  } catch (error) {
+    console.error('ResourcesApp: Error during render:', error);
+  }
 } else {
-  console.error('Resources root element not found');
+  console.error('ResourcesApp: Resources root element not found');
 }
 
 export default ResourcesApp;

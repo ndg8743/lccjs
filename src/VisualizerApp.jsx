@@ -8,6 +8,7 @@ import './styles.css';
  * Visualizer application entry point
  */
 function VisualizerApp() {
+  console.log('VisualizerApp: Rendering component');
   return (
     <AppProvider>
       <StackToolPage />
@@ -16,12 +17,21 @@ function VisualizerApp() {
 }
 
 // Create root and render the visualizer
+console.log('VisualizerApp: Starting initialization');
 const container = document.getElementById('visualizer-root');
+console.log('VisualizerApp: Container found:', container);
+
 if (container) {
-  const root = createRoot(container);
-  root.render(<VisualizerApp />);
+  try {
+    const root = createRoot(container);
+    console.log('VisualizerApp: Root created, rendering...');
+    root.render(<VisualizerApp />);
+    console.log('VisualizerApp: Render complete');
+  } catch (error) {
+    console.error('VisualizerApp: Error during render:', error);
+  }
 } else {
-  console.error('Visualizer root element not found');
+  console.error('VisualizerApp: Visualizer root element not found');
 }
 
 export default VisualizerApp;
