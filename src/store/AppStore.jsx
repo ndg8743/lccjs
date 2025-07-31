@@ -186,10 +186,31 @@ const useAppStore = create(
       // Download file with different extensions
       downloadFile: (fileName, extension = '.a') => {
         const state = get();
-        const content = state.fileTree[fileName] || state.editorContent;
+        
+        // Handle different download scenarios
+        let content = '';
+        let downloadFileName = '';
+        
+        if (extension === '.lst.txt') {
+          // Special case: download .lst file as .txt
+          const baseName = fileName.replace(/\.[^/.]+$/, '');
+          const lstFileName = `${baseName}.lst`;
+          content = state.fileTree[lstFileName] || '';
+          downloadFileName = `${baseName}.lst.txt`;
+        } else if (extension === '.txt') {
+          // Download current file as .txt
+          content = state.fileTree[fileName] || state.editorContent;
+          downloadFileName = fileName.replace(/\.[^/.]+$/, '') + '.txt';
+        } else {
+          // Download with specific extension
+          const baseName = fileName.replace(/\.[^/.]+$/, '');
+          const targetFileName = `${baseName}${extension}`;
+          content = state.fileTree[targetFileName] || state.fileTree[fileName] || state.editorContent;
+          downloadFileName = `${baseName}${extension}`;
+        }
         
         if (!content) {
-          state.addTerminalOutput(`✗ No content to download for ${fileName}`, 'text-red-400');
+          state.addTerminalOutput(`✗ No content to download for ${downloadFileName}`, 'text-red-400');
           return;
         }
         
@@ -197,13 +218,13 @@ const useAppStore = create(
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = fileName.replace(/\.[^/.]+$/, '') + extension;
+        a.download = downloadFileName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        state.addTerminalOutput(`✓ Downloaded: ${a.download}`, 'text-green-400');
+        state.addTerminalOutput(`✓ Downloaded: ${downloadFileName}`, 'text-green-400');
       },
       
       // Download all files
@@ -211,9 +232,15 @@ const useAppStore = create(
         const state = get();
         const files = {};
         
-        state.openFiles.forEach(fileName => {
+        // Include all files in fileTree (both source and generated)
+        Object.keys(state.fileTree).forEach(fileName => {
           files[fileName] = state.fileTree[fileName] || '';
         });
+        
+        // Also include current editor content if not already in fileTree
+        if (state.editorContent && !files[state.currentFileName]) {
+          files[state.currentFileName] = state.editorContent;
+        }
         
         if (Object.keys(files).length === 0) {
           state.addTerminalOutput('✗ No files to download', 'text-yellow-400');
@@ -223,7 +250,16 @@ const useAppStore = create(
         let content = `LCC.js Project Bundle\nGenerated: ${new Date().toISOString()}\n`;
         content += '='.repeat(50) + '\n\n';
         
-        Object.entries(files).forEach(([fileName, fileContent]) => {
+        // Sort files: source files first, then generated files
+        const sortedFiles = Object.entries(files).sort(([a], [b]) => {
+          const aIsGenerated = a.endsWith('.lst') || a.endsWith('.bst') || a.endsWith('.e');
+          const bIsGenerated = b.endsWith('.lst') || b.endsWith('.bst') || b.endsWith('.e');
+          if (aIsGenerated && !bIsGenerated) return 1;
+          if (!aIsGenerated && bIsGenerated) return -1;
+          return a.localeCompare(b);
+        });
+        
+        sortedFiles.forEach(([fileName, fileContent]) => {
           content += `--- ${fileName} ---\n`;
           content += fileContent;
           content += '\n\n' + '='.repeat(50) + '\n\n';
@@ -257,38 +293,80 @@ const useAppStore = create(
         state.addTerminalOutput('Running program...', 'text-blue-400');
         
         try {
-          // Simulate LCC.js compilation and execution
-          await new Promise(resolve => setTimeout(resolve, 800));
-          
-          const lines = content.split('\n').filter(line => line.trim());
-          state.addTerminalOutput(`✓ Program compiled successfully (${lines.length} lines)`, 'text-green-400');
-          state.addTerminalOutput('Program output:', 'text-blue-400');
-          
-          // Simulate realistic LCC.js output based on the code content
-          if (content.includes('dout')) {
-            // Generate output based on the number of dout statements
-            const doutCount = (content.match(/dout/g) || []).length;
-            if (doutCount > 0) {
-              for (let i = 1; i <= Math.min(doutCount, 10); i++) {
-                state.addTerminalOutput(i.toString(), 'text-white');
-                await new Promise(resolve => setTimeout(resolve, 100));
+          // Initialize worker if not already done
+          if (!state.worker) {
+            const worker = new Worker('./worker.js');
+            state.setWorker(worker);
+            
+            // Set up worker message handling
+            worker.onmessage = (event) => {
+              const { type, data } = event.data;
+              
+              switch (type) {
+                case 'stdout':
+                  state.addTerminalOutput(data, 'text-white');
+                  break;
+                case 'stderr':
+                  state.addTerminalOutput(`Error: ${data}`, 'text-red-400');
+                  break;
+                case 'exit':
+                  state.addTerminalOutput(`Program exited with code: ${data}`, 'text-yellow-400');
+                  break;
+                case 'storage':
+                  // Update file tree with generated files
+                  if (data && typeof data === 'object') {
+                    const newFiles = {};
+                    Object.keys(data).forEach(key => {
+                      if (key.endsWith('.lst') || key.endsWith('.bst') || key.endsWith('.e')) {
+                        newFiles[key] = data[key];
+                      }
+                    });
+                    
+                    // Update fileTree with new generated files
+                    const updatedFileTree = { ...state.fileTree, ...newFiles };
+                    state.setFileTree(updatedFileTree);
+                    
+                    // Add to openFiles if not already there
+                    Object.keys(newFiles).forEach(fileName => {
+                      if (!state.openFiles.includes(fileName)) {
+                        state.openFiles.push(fileName);
+                      }
+                    });
+                    
+                    if (Object.keys(newFiles).length > 0) {
+                      state.addTerminalOutput(`✓ Generated files: ${Object.keys(newFiles).join(', ')}`, 'text-green-400');
+                    }
+                  }
+                  break;
               }
-            } else {
-              state.addTerminalOutput('42', 'text-white');
-            }
-          } else if (content.includes('halt')) {
-            // Programs with halt statement
-            state.addTerminalOutput('Program completed', 'text-white');
-          } else {
-            // Default output for other programs
-            state.addTerminalOutput('Program executed successfully', 'text-white');
+            };
+            
+            worker.onerror = (error) => {
+              state.addTerminalOutput(`✗ Worker error: ${error.message}`, 'text-red-400');
+              state.setProcessing(false);
+            };
           }
           
-          state.addTerminalOutput('Program completed successfully.', 'text-green-400');
+          // Send code to worker for compilation and execution
+          state.worker.postMessage({
+            type: 'run',
+            payload: {
+              code: content,
+              filePath: fileName,
+              name: fileName.replace(/\.[^/.]+$/, '')
+            }
+          });
+          
+          // Set a timeout to prevent infinite waiting
+          setTimeout(() => {
+            if (state.isProcessing) {
+              state.addTerminalOutput('⚠ Program execution timed out', 'text-yellow-400');
+              state.setProcessing(false);
+            }
+          }, 10000); // 10 second timeout
           
         } catch (error) {
           state.addTerminalOutput(`✗ Error running program: ${error.message}`, 'text-red-400');
-        } finally {
           state.setProcessing(false);
         }
       },

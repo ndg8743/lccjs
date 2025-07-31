@@ -61,14 +61,14 @@ function Header() {
           </motion.div>
           
           {/* Desktop action buttons */}
-          <div className="hidden lg:flex space-x-2 flex-shrink-0">
+          <div className="hidden lg:flex space-x-4 flex-shrink-0">
             <Button
               variant="primary"
               size="md"
               onClick={handleRun}
               disabled={isProcessing}
               icon="fas fa-play"
-              className="px-4"
+              className="px-6"
             >
               {isProcessing ? 'Running...' : 'Run'}
             </Button>
@@ -78,9 +78,29 @@ function Header() {
               size="md"
               onClick={handleLoadDemo}
               icon="fas fa-file-code"
-              className="px-4"
+              className="px-6"
             >
               Demo
+            </Button>
+            
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => window.location.href = '/visualizer'}
+              icon="fas fa-layer-group"
+              className="px-6"
+            >
+              Visualizer
+            </Button>
+            
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => window.location.href = '/resources'}
+              icon="fas fa-book-open"
+              className="px-6"
+            >
+              Resources
             </Button>
           </div>
         </div>

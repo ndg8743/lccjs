@@ -15,7 +15,10 @@ The LCC Stack Visualizer Tool is an interactive web-based application designed t
 * **Syntax Highlighting**: Clear, color-coded display of assembly instructions for readability.
 * **Instruction Reference**: Integrated quick-reference sidebar for all LCC instructions and directives.
 * **Error Feedback**: Provide clear, informative error messages for assembly or execution errors.
+* **Console Logging**: For now, outputs are printed to the console, and user input is handled via the console as well.
+* **Execution Stepping**: Users must input a number (positive or negative) at runtime to control how many steps forward or backward to execute.
 * **Responsive Design**: Modern, clean, responsive UI optimized for desktops and tablets.
+* **Listing Data**: Each line of LCC assembly generates a simple listing entry object in Pass 2. These are collected in an array and can be sorted or processed for detailed visualization. Each listing entry contains the line number, location counter, source line, and decoded components such as code words, label, mnemonic, operands, and comments.
 
 ---
 
@@ -27,7 +30,7 @@ The LCC Stack Visualizer Tool is an interactive web-based application designed t
 
 ---
 
-## Possible Project Structure
+## Project Structure
 
 ```
 lccjs/
@@ -84,6 +87,8 @@ You are tasked with generating the frontend code for the LCC Stack Visualizer To
 
    * Ensure seamless integration with existing React components and state/context management within `lccjs`.
    * Utilize existing backend APIs provided by the LCC interpreter for code execution and data retrieval.
+   * Note: The current interpreter logs output to the console and accepts user step input through the console (as a signed number indicating steps to take).
+   * Each instruction processed during Pass 2 creates a listing object with fields like `lineNum`, `locCtr`, `sourceLine`, `codeWords`, `label`, `mnemonic`, `operands`, and `comment`, stored in a list and ready for sorting and display.
 
 7. **Animation & UX**:
 

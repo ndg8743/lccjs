@@ -47,8 +47,13 @@ function TerminalPanel() {
       setInputHistory(prev => [...prev, terminalInput]);
       setHistoryIndex(-1);
       
-      // TODO: Send input to worker
-      console.log('Terminal input:', terminalInput);
+      // Send input to worker if waiting for input
+      if (isWaitingForInput && worker) {
+        worker.postMessage({
+          type: 'stdin',
+          payload: terminalInput
+        });
+      }
       
       // Clear input
       setTerminalInput('');

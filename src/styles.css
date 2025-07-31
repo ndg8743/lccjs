@@ -100,6 +100,68 @@
   opacity: 1 !important;
 }
 
+/* LCC Assembly tooltip styling */
+.lcc-tooltip {
+  background-color: #1e293b !important;
+  border: 1px solid #38bdf8 !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  color: #e2e8f0 !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  max-width: 300px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8) !important;
+  z-index: 10000 !important;
+  position: absolute !important;
+}
+
+.lcc-tooltip .hover-title {
+  font-weight: bold !important;
+  color: #38bdf8 !important;
+  font-size: 14px !important;
+  margin-bottom: 4px !important;
+}
+
+.lcc-tooltip .hover-syntax {
+  background-color: #334155 !important;
+  padding: 4px 6px !important;
+  border-radius: 4px !important;
+  margin: 4px 0 !important;
+  font-family: 'Fira Code', 'JetBrains Mono', monospace !important;
+}
+
+.lcc-tooltip .hover-syntax code {
+  color: #fbbf24 !important;
+  font-size: 11px !important;
+}
+
+.lcc-tooltip .hover-description {
+  color: #94a3b8 !important;
+  font-style: italic !important;
+  margin: 4px 0 !important;
+}
+
+.lcc-tooltip .hover-explanation {
+  color: #cbd5e1 !important;
+  margin: 4px 0 !important;
+}
+
+.lcc-tooltip .hover-flags {
+  color: #fbbf24 !important;
+  margin: 4px 0 !important;
+}
+
+.lcc-tooltip .hover-binary {
+  color: #a3e635 !important;
+  margin: 4px 0 !important;
+}
+
+.lcc-tooltip .hover-binary code {
+  color: #fbbf24 !important;
+  font-family: 'Fira Code', 'JetBrains Mono', monospace !important;
+  font-size: 10px !important;
+}
+
 /* Diagnostic styling for error/warning/info */
 .diagnostic {
   @apply relative;
@@ -119,4 +181,26 @@
 
 .diagnostic-message {
   @apply absolute z-10 p-2 bg-white dark:bg-secondary-800 text-secondary-800 dark:text-white text-sm rounded-lg shadow-lg border border-secondary-200 dark:border-secondary-700 max-w-xs;
+}
+
+/* Visualizer specific styles */
+.react-draggable-dragging {
+  z-index: 1000 !important;
+}
+
+.react-resizable-handle {
+  z-index: 100;
+}
+
+/* Ensure visualizer components scale properly */
+.visualizer-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Override react-rnd to ensure components stay within bounds */
+.react-draggable {
+  max-width: 100% !important;
+  max-height: 100% !important;
 }

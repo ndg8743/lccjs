@@ -18,7 +18,8 @@ function FileExplorer() {
     loadFile,
     currentFileName,
     addTerminalOutput,
-    setIsRenaming
+    setIsRenaming,
+    downloadFile
   } = useApp();
   
   const [isExpanded, setIsExpanded] = useState(true);
@@ -136,19 +137,8 @@ function FileExplorer() {
       
       addTerminalOutput(`✓ Downloaded: ${currentFileName}`, 'text-green-400');
     } else {
-      // For generated files (.lst, .bst, .e), use the global function
-      console.log('Available window functions:', {
-        downloadFile: typeof window.downloadFile,
-        downloadAllAsTxt: typeof window.downloadAllAsTxt
-      });
-      
-      if (window.downloadFile) {
-        console.log('Calling downloadFile with extension:', extension.replace('.', ''));
-        window.downloadFile(extension.replace('.', ''));
-      } else {
-        console.error('downloadFile function not found on window object');
-        addTerminalOutput('Download function not available. Please refresh the page and try again.', 'text-red-400');
-      }
+      // For generated files (.lst, .bst, .e), use the store function
+      downloadFile(currentFileName, extension);
     }
     setShowDownloadMenu(false);
   }, [currentFileName, addTerminalOutput]);

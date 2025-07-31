@@ -10,6 +10,13 @@ function CommandPalette() {
   const { 
     isCommandPaletteOpen, 
     toggleCommandPalette,
+    runProgram,
+    addFile,
+    addTerminalOutput,
+    loadDemoFile,
+    clearTerminalOutput,
+    toggleDarkMode,
+    downloadAllFiles
   } = useApp();
   
   const [query, setQuery] = useState('');
@@ -23,7 +30,10 @@ function CommandPalette() {
       label: 'Run Program',
       description: 'Execute the current assembly program',
       icon: 'fas fa-play',
-      action: () => console.log('Run program'),
+      action: () => {
+        runProgram();
+        toggleCommandPalette();
+      },
       keywords: ['run', 'execute', 'start']
     },
     {
@@ -31,7 +41,14 @@ function CommandPalette() {
       label: 'New File',
       description: 'Create a new assembly file',
       icon: 'fas fa-file-plus',
-      action: () => console.log('New file'),
+      action: () => {
+        const fileName = prompt('Enter file name (e.g., program.a):');
+        if (fileName && fileName.trim()) {
+          addFile(fileName.trim(), '');
+          addTerminalOutput(`Created new file: ${fileName.trim()}`, 'text-green-400');
+        }
+        toggleCommandPalette();
+      },
       keywords: ['new', 'create', 'file']
     },
     {
@@ -39,7 +56,10 @@ function CommandPalette() {
       label: 'Open File',
       description: 'Open an existing file',
       icon: 'fas fa-folder-open',
-      action: () => console.log('Open file'),
+      action: () => {
+        addTerminalOutput('Use the upload button in the file explorer to open files.', 'text-blue-400');
+        toggleCommandPalette();
+      },
       keywords: ['open', 'load', 'file']
     },
     {
@@ -47,7 +67,10 @@ function CommandPalette() {
       label: 'Save File',
       description: 'Save the current file',
       icon: 'fas fa-save',
-      action: () => console.log('Save file'),
+      action: () => {
+        addTerminalOutput('Files are saved automatically as you type.', 'text-blue-400');
+        toggleCommandPalette();
+      },
       keywords: ['save', 'write', 'file']
     },
     {
@@ -55,7 +78,10 @@ function CommandPalette() {
       label: 'Load Demo',
       description: 'Load the a1test.a demo file',
       icon: 'fas fa-file-code',
-      action: () => console.log('Load demo'),
+      action: () => {
+        loadDemoFile('a1test.a');
+        toggleCommandPalette();
+      },
       keywords: ['demo', 'example', 'sample', 'a1test']
     },
     {
@@ -63,7 +89,10 @@ function CommandPalette() {
       label: 'Clear Terminal',
       description: 'Clear the terminal output',
       icon: 'fas fa-trash-alt',
-      action: () => console.log('Clear terminal'),
+      action: () => {
+        clearTerminalOutput();
+        toggleCommandPalette();
+      },
       keywords: ['clear', 'clean', 'terminal', 'output']
     },
     {
@@ -71,7 +100,10 @@ function CommandPalette() {
       label: 'Toggle Theme',
       description: 'Switch between light and dark mode',
       icon: 'fas fa-palette',
-      action: () => console.log('Toggle theme'),
+      action: () => {
+        toggleDarkMode();
+        toggleCommandPalette();
+      },
       keywords: ['theme', 'dark', 'light', 'mode']
     },
     {
@@ -79,7 +111,10 @@ function CommandPalette() {
       label: 'Download All Files',
       description: 'Download all generated files as TXT',
       icon: 'fas fa-download',
-      action: () => console.log('Download all'),
+      action: () => {
+        downloadAllFiles();
+        toggleCommandPalette();
+      },
       keywords: ['download', 'export', 'all', 'files']
     }
   ];

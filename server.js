@@ -21,6 +21,29 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index-react.html'));
 });
 
+// Serve visualizer.html for the visualizer page
+app.get('/visualizer', (req, res) => {
+  res.sendFile(path.join(__dirname, 'visualizer.html'));
+});
+
+// Serve resources.html for the resources page
+app.get('/resources', (req, res) => {
+  res.sendFile(path.join(__dirname, 'resources.html'));
+});
+
+// Serve LCC package files
+app.get('/lcc_packages+files/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, 'lcc_packages+files', filename);
+  
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      res.status(404).json({ error: 'File not found' });
+    }
+  });
+});
+
 // Serve demo files with proper CORS headers
 app.get('/demos/:filename', (req, res) => {
   const filename = req.params.filename;

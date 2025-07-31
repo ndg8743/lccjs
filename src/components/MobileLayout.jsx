@@ -109,10 +109,7 @@ function MobileLayout() {
           icon="fas fa-play"
           className="rounded-full w-14 h-14 shadow-lg"
           title="Run Program"
-          onClick={() => {
-            // TODO: Implement run functionality
-            console.log('Run button clicked');
-          }}
+          onClick={runProgram}
         />
       </motion.div>
     </div>

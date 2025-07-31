@@ -17,7 +17,9 @@ function HamburgerMenu() {
     addFile,
     currentFileName,
     addTerminalOutput,
-    openFiles
+    openFiles,
+    downloadFile,
+    downloadAllFiles
   } = useApp();
 
   const handleRun = async () => {
@@ -50,36 +52,14 @@ function HamburgerMenu() {
   };
 
   const handleDownloadAll = () => {
-    // Use the global downloadAllAsTxt function from main.js
-    console.log('Available window functions:', {
-      downloadFile: typeof window.downloadFile,
-      downloadAllAsTxt: typeof window.downloadAllAsTxt
-    });
-    
-    if (window.downloadAllAsTxt) {
-      console.log('Calling downloadAllAsTxt');
-      window.downloadAllAsTxt();
-    } else {
-      console.error('downloadAllAsTxt function not found on window object');
-      addTerminalOutput('Download all function not available. Please refresh the page and try again.', 'text-red-400');
-    }
+    // Download all files as a bundle
+    downloadAllFiles();
     toggleHamburgerMenu();
   };
 
   const handleDownload = (extension) => {
-    // Use the global downloadFile function from main.js instead of the store version
-    console.log('Available window functions:', {
-      downloadFile: typeof window.downloadFile,
-      downloadAllAsTxt: typeof window.downloadAllAsTxt
-    });
-    
-    if (window.downloadFile) {
-      console.log('Calling downloadFile with extension:', extension.replace('.', ''));
-      window.downloadFile(extension.replace('.', ''));
-    } else {
-      console.error('downloadFile function not found on window object');
-      addTerminalOutput('Download function not available. Please refresh the page and try again.', 'text-red-400');
-    }
+    // Download the current file with the specified extension
+    downloadFile(currentFileName, extension);
     toggleHamburgerMenu();
   };
 
@@ -101,6 +81,16 @@ function HamburgerMenu() {
       icon: 'fas fa-file-code',
       onClick: handleLoadDemo,
     },
+          {
+        label: 'Stack Visualizer',
+        icon: 'fas fa-layer-group',
+        onClick: () => window.location.href = '/visualizer',
+      },
+      {
+        label: 'Learning Resources',
+        icon: 'fas fa-book-open',
+        onClick: () => window.location.href = '/resources',
+      },
     { type: 'divider' },
     {
       label: 'Options',

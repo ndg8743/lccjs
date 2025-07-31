@@ -6,7 +6,9 @@ export default {
   entry: {
     bundle: "./src/core/lcc.js",
     main: "./src/main.js",
-    app: "./src/App.jsx" // New React entry point
+    app: "./src/App.jsx", // New React entry point
+    visualizer: "./src/VisualizerApp.jsx", // Visualizer entry point
+    resources: "./src/ResourcesApp.jsx" // Resources page entry point
   },
   output: {
     filename: "[name].js",
