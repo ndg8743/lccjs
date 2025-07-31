@@ -67,16 +67,16 @@
     <header class="bg-secondary-800 shadow-md">
       <div class="container mx-auto px-4 py-3 flex justify-between items-center">        <div class="flex items-center space-x-4">
           <h1 class="text-xl font-bold text-primary-400">LCC.js</h1>
-          <div class="hidden md:flex space-x-2">
+          <div class="hidden md:flex space-x-3">
             <button id="btn-run" class="btn btn-primary text-sm">
-              <i class="fas fa-play mr-1"></i> Run
+              <i class="fas fa-play mr-1"></i> Run Program
             </button>
             <button id="btn-load-demo" class="btn btn-secondary text-sm">
-              <i class="fas fa-file-code mr-1"></i> Load a1test.a
+              <i class="fas fa-file-code mr-1"></i> Load Demo
             </button>
           </div>
-        </div>        <div class="flex items-center space-x-2">
-          <button id="btn-theme-toggle" class="btn btn-secondary text-sm" title="Toggle Dark Mode">
+        </div>        <div class="flex items-center space-x-3">
+          <button id="btn-theme-toggle" class="btn btn-secondary text-sm">
             <i class="fas fa-sun"></i>
           </button>
           <!-- Hamburger Menu Button -->
@@ -86,7 +86,7 @@
         </div>
       </div>
     </header>    <!-- Hamburger Menu Dropdown -->
-    <div id="hamburger-menu" class="hamburger-menu hidden">
+    <div id="hamburger-menu" class="hamburger-menu">
       <div class="hamburger-menu-section">
         <h3 class="hamburger-menu-section-title">File Operations</h3>
       </div>
@@ -113,8 +113,12 @@
         </button>
         <button data-format="lst" class="hamburger-menu-item download-format-btn">
           <i class="fas fa-download"></i> Listing (.lst)
-        </button>        <button data-format="bst" class="hamburger-menu-item download-format-btn">
+        </button>
+        <button data-format="bst" class="hamburger-menu-item download-format-btn">
           <i class="fas fa-download"></i> Binary (.bst)
+        </button>
+        <button data-format="e" class="hamburger-menu-item download-format-btn">
+          <i class="fas fa-download"></i> Executable (.e)
         </button>
         <button id="btn-download-all" class="hamburger-menu-item">
           <i class="fas fa-file-archive"></i> Download All as TXT
@@ -362,6 +366,18 @@ save2:    .word 100`;
     window.inputView = inputView;
     window.indexView = indexView;
     window.worker = worker;
+  </script>
+
+  <!-- Tooltip transparency fix -->
+  <script type="module">
+    // Import and initialize tooltip fixer
+    import { initializeTooltipFixer } from './src/tooltip-fix.js';
+    
+    // Initialize tooltip fixer immediately
+    initializeTooltipFixer();
+    
+    // Also run after a short delay to catch any delayed tooltip creation
+    setTimeout(initializeTooltipFixer, 1000);
   </script>
 </body>
 

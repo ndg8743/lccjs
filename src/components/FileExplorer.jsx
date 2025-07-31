@@ -18,7 +18,6 @@ function FileExplorer() {
     loadFile,
     currentFileName,
     addTerminalOutput,
-    downloadFile,
     setIsRenaming
   } = useApp();
   
@@ -114,11 +113,45 @@ function FileExplorer() {
     event.target.value = ''; // Reset input
   }, [addFile, openFiles, addTerminalOutput]);
 
-  // Handle download with different extensions
+  // Handle download with different extensions - use the global functions
   const handleDownload = useCallback((extension) => {
-    downloadFile(currentFileName, extension);
+    // Use the global downloadFile function from main.js for generated files
+    if (extension === '.a') {
+      // For source files, get content from editor/storage and download
+      const content = window.editor?.getValue() || '';
+      if (!content) {
+        addTerminalOutput('No content to download. Please load a file first.', 'text-yellow-400');
+        return;
+      }
+      
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = currentFileName || 'program.a';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      addTerminalOutput(`✓ Downloaded: ${currentFileName}`, 'text-green-400');
+    } else {
+      // For generated files (.lst, .bst, .e), use the global function
+      console.log('Available window functions:', {
+        downloadFile: typeof window.downloadFile,
+        downloadAllAsTxt: typeof window.downloadAllAsTxt
+      });
+      
+      if (window.downloadFile) {
+        console.log('Calling downloadFile with extension:', extension.replace('.', ''));
+        window.downloadFile(extension.replace('.', ''));
+      } else {
+        console.error('downloadFile function not found on window object');
+        addTerminalOutput('Download function not available. Please refresh the page and try again.', 'text-red-400');
+      }
+    }
     setShowDownloadMenu(false);
-  }, [downloadFile, currentFileName]);
+  }, [currentFileName, addTerminalOutput]);
 
   return (
     <motion.div
@@ -217,6 +250,13 @@ function FileExplorer() {
                             >
                               <i className="fas fa-code mr-3" />
                               Download .bst
+                            </button>
+                            <button
+                              onClick={() => handleDownload('.e')}
+                              className="w-full px-4 py-3 text-left text-sm text-secondary-200 hover:bg-secondary-700 transition-colors border-b border-secondary-700 first:rounded-t-lg last:rounded-b-lg last:border-b-0"
+                            >
+                              <i className="fas fa-cog mr-3" />
+                              Download .e
                             </button>
                             <button
                               onClick={() => handleDownload('.txt')}

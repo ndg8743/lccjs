@@ -1,0 +1,53 @@
+/* Add to your existing styles.css file */
+
+/* Additional CodeMirror tooltip styles */
+.cm-tooltip-hover {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Fix for any CodeMirror tooltip styling that might interfere */
+.cm-tooltip-hover .cm-tooltip-arrow {
+  display: none !important;
+}
+
+/* Enhance the hover effect */
+.lcc-tooltip.showing {
+  transform: translateY(-3px);
+  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6),
+              0 15px 25px -5px rgba(0, 0, 0, 0.5),
+              0 0 0 1px rgba(56, 189, 248, 0.6) !important;
+}
+
+/* Make sure tooltip content is always visible */
+.lcc-tooltip .hover-title,
+.lcc-tooltip .hover-syntax,
+.lcc-tooltip .hover-description,
+.lcc-tooltip .hover-explanation,
+.lcc-tooltip .hover-flags,
+.lcc-tooltip .hover-binary {
+  opacity: 1 !important;
+}
+
+/* Ensure tooltip is never transparent */
+.cm-tooltip-hover,
+.cm-tooltip-hover .lcc-tooltip {
+  background-color: transparent !important;
+}
+
+/* Improve tooltip visibility */
+.lcc-tooltip {
+  z-index: 10001 !important;
+}
+
+/* Dark theme tooltip enhancements */
+:root.dark .lcc-tooltip {
+  background-color: #1e293b !important; /* Navy blue */
+  color: #ffffff !important;
+}
+
+:root.dark .lcc-tooltip .hover-syntax,
+:root.dark .lcc-tooltip .hover-binary {
+  background-color: #0f172a !important; /* Darker navy blue */
+}

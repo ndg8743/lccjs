@@ -95,21 +95,26 @@ self.onmessage = function(event) {
         } else if (type === "run") {
             const { code, filePath, name } = payload;
 
-            // Extract filename without extension
+            // Extract filename without extension for output files
             const fileName = filePath.split('.').slice(0, -1).join('.');
+            const baseFileName = filePath.split('/').pop().split('.')[0]; // Get just the filename part
 
-            console.log("Running:", fileName);
+            console.log("Running:", fileName, "baseFileName:", baseFileName);
 
             // Clear input buffer
             while(self.inputBuffer.shift());
             
-            // Clear previous outputs
-            delete self.fsWrapperStorage[fileName + ".bst"];
-            delete self.fsWrapperStorage[fileName + ".lst"];
-            delete self.fsWrapperStorage[fileName + ".e"];
+            // Clear previous outputs - but be more specific about filenames
+            const outputExtensions = ['.bst', '.lst', '.e'];
+            outputExtensions.forEach(ext => {
+                delete self.fsWrapperStorage[fileName + ext];
+                delete self.fsWrapperStorage[baseFileName + ext];
+            });
             
             self.fsWrapperStorage[filePath] = code;
             self.fsWrapperStorage["name.nnn"] = name || "noname";
+
+            console.log("Files before execution:", Object.keys(self.fsWrapperStorage));
 
             // Capture stdout, stderr, and stdin handling
             if (self.process && self.process.subscribers) {
@@ -133,9 +138,22 @@ self.onmessage = function(event) {
 
             // Run LCC Compiler
             try {
+                console.log("Starting LCC compilation...");
                 lcc.main([filePath]);
+                console.log("LCC compilation completed.");
+                console.log("Files after execution:", Object.keys(self.fsWrapperStorage));
+                
+                // Check if expected output files were generated
+                const expectedFiles = [`${fileName}.bst`, `${fileName}.lst`, `${fileName}.e`, `${baseFileName}.bst`, `${baseFileName}.lst`, `${baseFileName}.e`];
+                expectedFiles.forEach(file => {
+                    if (self.fsWrapperStorage[file]) {
+                        console.log(`Generated file found: ${file} (${self.fsWrapperStorage[file].length} bytes)`);
+                    } else {
+                        console.log(`Expected file not found: ${file}`);
+                    }
+                });
             } catch (e) {
-                console.log(e);
+                console.log("LCC compilation error:", e);
                 self.postMessage({ type: "stderr", data: e.toString() });
             }
             self.postMessage({ type: "storage", data: self.fsWrapperStorage.jsonify() });

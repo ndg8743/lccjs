@@ -96,7 +96,8 @@
 
 /* Tooltip styling for hover information */
 .tooltip {
-  @apply absolute z-10 p-2 bg-white dark:bg-secondary-800 text-secondary-800 dark:text-white text-sm rounded-lg shadow-lg border border-secondary-200 dark:border-secondary-700 max-w-xs;
+  @apply absolute z-10 p-3 bg-white dark:bg-secondary-800 text-secondary-800 dark:text-white text-sm rounded-lg shadow-lg border border-secondary-200 dark:border-primary-600 max-w-xs;
+  opacity: 1 !important;
 }
 
 /* Diagnostic styling for error/warning/info */

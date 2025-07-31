@@ -521,9 +521,15 @@ const lccHoverTooltip = hoverTooltip((view, pos, side) => {
     pos: from + wordStart,
     end: from + wordEnd,
     above: false,
-    create: () => ({ dom: createTooltip(info) }),
-    side: 1,
-    arrow: true
+    create: () => {
+      const tooltip = createTooltip(info);
+      // Add a class to help with animation
+      setTimeout(() => {
+        tooltip.classList.add('showing');
+      }, 0);
+      return { dom: tooltip };
+    },
+    side: 1
   };
 }, { hoverTime: 300 });
 
@@ -571,26 +577,26 @@ function EditorPanel() {
         overflow: 'auto',
       },
       '.cm-tooltip': {
-        backgroundColor: 'transparent !important',
-        border: 'none !important',
+        backgroundColor: '#1e293b !important',
+        border: '1px solid #38bdf8 !important',
         padding: '0 !important',
-        boxShadow: 'none !important',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.8) !important',
         position: 'absolute !important',
         zIndex: '10000 !important',
       },
       '.cm-tooltip.cm-tooltip-section': {
-        backgroundColor: 'transparent !important',
-        border: 'none !important',
+        backgroundColor: '#1e293b !important',
+        border: '1px solid #38bdf8 !important',
         padding: '0 !important',
-        boxShadow: 'none !important',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.8) !important',
         position: 'absolute !important',
         zIndex: '10000 !important',
       },
       '.cm-tooltip .cm-tooltip-section': {
-        backgroundColor: 'transparent !important',
-        border: 'none !important',
+        backgroundColor: '#1e293b !important',
+        border: '1px solid #38bdf8 !important',
         padding: '0 !important',
-        boxShadow: 'none !important',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.8) !important',
         position: 'absolute !important',
         zIndex: '10000 !important',
       },

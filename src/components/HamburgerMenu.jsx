@@ -15,8 +15,6 @@ function HamburgerMenu() {
     runProgram,
     loadDemoFile,
     addFile,
-    downloadAllFiles,
-    downloadFile,
     currentFileName,
     addTerminalOutput,
     openFiles
@@ -52,12 +50,41 @@ function HamburgerMenu() {
   };
 
   const handleDownloadAll = () => {
-    downloadAllFiles();
+    // Use the global downloadAllAsTxt function from main.js
+    console.log('Available window functions:', {
+      downloadFile: typeof window.downloadFile,
+      downloadAllAsTxt: typeof window.downloadAllAsTxt
+    });
+    
+    if (window.downloadAllAsTxt) {
+      console.log('Calling downloadAllAsTxt');
+      window.downloadAllAsTxt();
+    } else {
+      console.error('downloadAllAsTxt function not found on window object');
+      addTerminalOutput('Download all function not available. Please refresh the page and try again.', 'text-red-400');
+    }
     toggleHamburgerMenu();
   };
 
   const handleDownload = (extension) => {
-    downloadFile(currentFileName, extension);
+    // Use the global downloadFile function from main.js instead of the store version
+    console.log('Available window functions:', {
+      downloadFile: typeof window.downloadFile,
+      downloadAllAsTxt: typeof window.downloadAllAsTxt
+    });
+    
+    if (window.downloadFile) {
+      console.log('Calling downloadFile with extension:', extension.replace('.', ''));
+      window.downloadFile(extension.replace('.', ''));
+    } else {
+      console.error('downloadFile function not found on window object');
+      addTerminalOutput('Download function not available. Please refresh the page and try again.', 'text-red-400');
+    }
+    toggleHamburgerMenu();
+  };
+
+  const handleOptions = () => {
+    addTerminalOutput('Options panel coming soon! For now, use the menu below for file operations.', 'text-blue-400');
     toggleHamburgerMenu();
   };
 
@@ -73,6 +100,12 @@ function HamburgerMenu() {
       label: 'Load Demo',
       icon: 'fas fa-file-code',
       onClick: handleLoadDemo,
+    },
+    { type: 'divider' },
+    {
+      label: 'Options',
+      icon: 'fas fa-cog',
+      onClick: handleOptions,
     },
     { type: 'divider' },
     {
@@ -105,6 +138,11 @@ function HamburgerMenu() {
       label: 'Download .bst',
       icon: 'fas fa-download',
       onClick: () => handleDownload('.bst'),
+    },
+    {
+      label: 'Download .e',
+      icon: 'fas fa-download',
+      onClick: () => handleDownload('.e'),
     },
     {
       label: 'Download All',

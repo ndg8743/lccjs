@@ -1,15 +1,18 @@
 /* Base theme variables */
 :root {
   /* Light theme defaults */
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
   --bg-tertiary: #f1f5f9;
   --text-primary: #1e293b;
   --text-secondary: #475569;
-  --border-color: #cbd5e1;
-  --hover-bg: #e2e8f0;
-  --code-bg: #f1f5f9;
-  --code-border: #cbd5e1;
+  --border-color: #e2e8f0;
+  --hover-bg: #f1f5f9;
+  --code-bg: #f8fafc;
+  --code-border: #e2e8f0;
+  --tooltip-bg: #ffffff;
+  --tooltip-border: #e2e8f0;
+  --tooltip-text: #1e293b;
 }
 
 :root.dark {
@@ -59,6 +62,36 @@ body, #root, .btn, .card, .input {
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
+  padding: 0.75rem 1rem;
+}
+
+.header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 100%;
+  padding: 0;
+}
+
+/* Left side of header */
+.header .flex.items-center.space-x-4 {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Right side of header */
+.header .flex.items-center.space-x-3 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Button improvements */
+.header .btn {
+  white-space: nowrap;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
 }
 
 /* Main content area */
@@ -347,25 +380,23 @@ body, #root, .btn, .card, .input {
   z-index: 10000;
   min-width: 320px;
   max-width: 450px;
-  background-color: #000000 !important;
+  background-color: var(--bg-secondary) !important;
   background-image: none !important;
-  border: 2px solid #38bdf8 !important;
-  border-radius: 12px;
-  padding: 20px;
+  border: 2px solid var(--tooltip-border) !important;
+  border-radius: 8px;
+  padding: 12px 16px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
   line-height: 1.6;
-  color: #ffffff !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 1), 
-              0 10px 20px -5px rgba(0, 0, 0, 0.8),
-              0 0 0 1px rgba(56, 189, 248, 0.5) !important;
-  display: block !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+              0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  display: none !important;
   opacity: 1 !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   pointer-events: none;
   transform: translateY(0);
-  margin-top: 10px;
-  margin-left: 10px;
+  margin: 4px;
   filter: none !important;
   backdrop-filter: none !important;
 }
@@ -400,17 +431,20 @@ body, #root, .btn, .card, .input {
 .cm-tooltip {
   position: absolute !important;
   z-index: 10000 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .cm-tooltip .lcc-tooltip {
   position: relative !important;
   margin: 0 !important;
+  z-index: 10001 !important;
 }
 
 /* Ensure tooltip has no transparency */
 .lcc-tooltip,
 .lcc-tooltip * {
-  background-color: #000000 !important;
   opacity: 1 !important;
   backdrop-filter: none !important;
   filter: none !important;
@@ -418,13 +452,18 @@ body, #root, .btn, .card, .input {
 }
 
 /* Override any CodeMirror tooltip transparency */
-.cm-tooltip,
-.cm-tooltip * {
-  background-color: #000000 !important;
+.cm-tooltip {
   opacity: 1 !important;
   backdrop-filter: none !important;
   filter: none !important;
   background-image: none !important;
+}
+
+/* Make tooltip container have navy blue background */
+.cm-tooltip-hover {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* Ensure tooltip is always visible */
@@ -444,7 +483,7 @@ body, #root, .btn, .card, .input {
 }
 
 .lcc-tooltip .hover-syntax {
-  background-color: #111111 !important;
+  background-color: #0f172a !important; /* Darker navy blue */
   background-image: none !important;
   border: 1px solid #475569;
   border-radius: 8px;
@@ -490,7 +529,7 @@ body, #root, .btn, .card, .input {
 }
 
 .lcc-tooltip .hover-binary {
-  background-color: #111111 !important;
+  background-color: #0f172a !important; /* Darker navy blue */
   background-image: none !important;
   border: 1px solid #475569;
   border-radius: 8px;
@@ -510,48 +549,71 @@ body, #root, .btn, .card, .input {
   font-family: inherit;
 }
 
-/* Light theme tooltip overrides */
+/* Light theme tooltip overrides - COMPREHENSIVE */
 :root:not(.dark) .lcc-tooltip {
-  background: #ffffff;
-  border: 1px solid #0ea5e9;
-  color: #1e293b;
-  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1), 
-              0 8px 10px -6px rgba(0, 0, 0, 0.05),
-              0 0 0 1px rgba(14, 165, 233, 0.2);
+  background-color: #ffffff !important;
+  border: 2px solid #0ea5e9 !important;
+  color: #1e293b !important;
+  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.3), 
+              0 8px 10px -6px rgba(0, 0, 0, 0.15),
+              0 0 0 1px rgba(14, 165, 233, 0.4) !important;
 }
 
 :root:not(.dark) .lcc-tooltip .hover-title {
-  color: #0ea5e9;
+  color: #0ea5e9 !important;
 }
 
 :root:not(.dark) .lcc-tooltip .hover-syntax {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1e293b !important;
 }
 
 :root:not(.dark) .lcc-tooltip .hover-syntax code {
-  color: #0369a1;
+  color: #0369a1 !important;
 }
 
 :root:not(.dark) .lcc-tooltip .hover-description {
-  color: #475569;
+  color: #475569 !important;
 }
 
 :root:not(.dark) .lcc-tooltip .hover-explanation {
-  color: #64748b;
+  color: #64748b !important;
 }
 
 :root:not(.dark) .lcc-tooltip .hover-flags {
-  color: #d97706;
+  color: #d97706 !important;
 }
 
 :root:not(.dark) .lcc-tooltip .hover-binary {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1e293b !important;
 }
 
 :root:not(.dark) .lcc-tooltip .hover-binary code {
-  color: #0369a1;
+  color: #0369a1 !important;
+}
+
+/* Light theme overrides for ALL tooltips - FORCE VISIBILITY */
+:root:not(.dark) .tooltip,
+:root:not(.dark) .cm-tooltip,
+:root:not(.dark) .cm-tooltip-hover,
+:root:not(.dark) div[role="tooltip"],
+:root:not(.dark) [class*="tooltip"] {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  border: 2px solid #0ea5e9 !important;
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.2), 
+              0 4px 6px -2px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Force all tooltip content to be visible in light mode */
+:root:not(.dark) .tooltip *,
+:root:not(.dark) .cm-tooltip *,
+:root:not(.dark) .lcc-tooltip *,
+:root:not(.dark) .cm-tooltip-hover * {
+  color: #1e293b !important;
 }
 
 /* Command palette styling */
@@ -865,47 +927,104 @@ body, #root, .btn, .card, .input {
   background-color: #0284c7;
 }
 
-/* Light theme overrides */
+/* Light theme overrides - comprehensive */
 :root:not(.dark) {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
   --bg-tertiary: #f1f5f9;
   --text-primary: #1e293b;
   --text-secondary: #475569;
-  --border-color: #cbd5e1;
-  --hover-bg: #e2e8f0;
-  --code-bg: #f1f5f9;
+  --border-color: #e2e8f0;
+  --hover-bg: #f1f5f9;
+  --code-bg: #f8fafc;
   --code-border: #cbd5e1;
 }
 
+/* Force light mode body styling */
 :root:not(.dark) body {
-  background-color: #f8fafc;
-  color: #1e293b;
+  background-color: #ffffff !important;
+  color: #1e293b !important;
 }
 
-:root:not(.dark) header {
-  background-color: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+/* Light mode main app container */
+:root:not(.dark) #app {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+}
+
+/* Light mode header */
+:root:not(.dark) header,
+:root:not(.dark) .bg-secondary-800 {
+  background-color: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+/* Light mode panels and containers */
+:root:not(.dark) .bg-secondary-900 {
+  background-color: #ffffff !important;
 }
 
 :root:not(.dark) .bg-secondary-800 {
-  background-color: #f1f5f9;
+  background-color: #f8fafc !important;
 }
 
-:root:not(.dark) .bg-secondary-900 {
-  background-color: #ffffff;
+:root:not(.dark) .bg-secondary-700 {
+  background-color: #f1f5f9 !important;
 }
 
-:root:not(.dark) .border-secondary-700 {
-  border-color: #cbd5e1;
+:root:not(.dark) .bg-secondary-600 {
+  background-color: #e2e8f0 !important;
 }
 
-:root:not(.dark) .text-secondary-100 {
-  color: #1e293b;
+/* Light mode text colors */
+:root:not(.dark) .text-secondary-100,
+:root:not(.dark) .text-secondary-200,
+:root:not(.dark) .text-secondary-300 {
+  color: #1e293b !important;
+}
+
+:root:not(.dark) .text-secondary-400 {
+  color: #64748b !important;
 }
 
 :root:not(.dark) .text-primary-400 {
-  color: #0ea5e9;
+  color: #0ea5e9 !important;
+}
+
+/* Light mode borders */
+:root:not(.dark) .border-secondary-700,
+:root:not(.dark) .border-secondary-600 {
+  border-color: #e2e8f0 !important;
+}
+
+/* File Explorer light mode */
+:root:not(.dark) .bg-secondary-900 {
+  background-color: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+/* Light mode buttons */
+:root:not(.dark) .btn-secondary {
+  background-color: #e2e8f0 !important;
+  color: #475569 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+:root:not(.dark) .btn-secondary:hover {
+  background-color: #cbd5e1 !important;
+}
+
+/* Light mode panel headers */
+:root:not(.dark) .panel-header {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+/* Light mode CodeMirror editor */
+:root:not(.dark) .CodeMirror {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
 }
 
 :root:not(.dark) .CodeMirror-gutters {
@@ -917,6 +1036,182 @@ body, #root, .btn, .card, .input {
   color: #64748b !important;
 }
 
+/* Light mode terminal - COMPREHENSIVE FIX */
+:root:not(.dark) .terminal-panel .terminal,
+:root:not(.dark) .terminal-panel .terminal-output,
+:root:not(.dark) .terminal-panel .terminal-content {
+  background: #ffffff !important;
+  color: #1e293b !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+:root:not(.dark) .terminal-panel .terminal-line.input {
+  color: #0ea5e9 !important;
+}
+
+:root:not(.dark) .terminal-panel .terminal-input {
+  color: #1e293b !important;
+}
+
+/* Force all terminal text colors in light mode */
+:root:not(.dark) .terminal-panel *,
+:root:not(.dark) .terminal-panel .terminal-line,
+:root:not(.dark) .terminal-panel .terminal-output *,
+:root:not(.dark) .terminal-panel .terminal-content * {
+  color: #1e293b !important;
+}
+
+/* Light mode terminal text color classes */
+:root:not(.dark) .text-green-400 {
+  color: #22c55e !important;
+}
+
+:root:not(.dark) .text-red-400,
+:root:not(.dark) .text-red-500 {
+  color: #dc2626 !important;
+}
+
+:root:not(.dark) .text-yellow-400,
+:root:not(.dark) .text-yellow-500 {
+  color: #d97706 !important;
+}
+
+:root:not(.dark) .text-blue-400 {
+  color: #0ea5e9 !important;
+}
+
+:root:not(.dark) .text-primary-400 {
+  color: #0ea5e9 !important;
+}
+
+:root:not(.dark) .text-white {
+  color: #1e293b !important;
+}
+
+/* Light mode hamburger menu */
+:root:not(.dark) .hamburger-menu {
+  background: #ffffff !important;
+  border-left: 1px solid #e2e8f0 !important;
+}
+
+:root:not(.dark) .hamburger-menu-section {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+:root:not(.dark) .hamburger-menu-section-title {
+  color: #0ea5e9 !important;
+}
+
+:root:not(.dark) .hamburger-menu-item {
+  color: #1e293b !important;
+}
+
+:root:not(.dark) .hamburger-menu-item:hover {
+  background: #f1f5f9 !important;
+}
+
+:root:not(.dark) .hamburger-menu-item i {
+  color: #64748b !important;
+}
+
+/* Light mode file explorer download menu */
+:root:not(.dark) .text-secondary-200 {
+  color: #1e293b !important;
+}
+
+:root:not(.dark) .hover\\:bg-secondary-700:hover {
+  background-color: #f1f5f9 !important;
+}
+
+/* Light mode scrollbars */
+:root:not(.dark) ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+:root:not(.dark) ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+:root:not(.dark) ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+:root:not(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+:root:not(.dark) .hover\\:bg-secondary-700:hover {
+  background-color: #f1f5f9;
+}
+
+:root:not(.dark) .hover\\:bg-secondary-800:hover {
+  background-color: #e2e8f0;
+}
+
+/* Terminal light mode */
+:root:not(.dark) .terminal-panel .terminal,
+:root:not(.dark) .terminal-panel .terminal-output,
+:root:not(.dark) .terminal-panel .terminal-content {
+  background: #ffffff;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+}
+
+:root:not(.dark) .terminal-panel .terminal-line.input {
+  color: #0ea5e9;
+}
+
+:root:not(.dark) .terminal-panel .terminal-input {
+  color: #1e293b;
+}
+
+/* Editor light mode */
+:root:not(.dark) .CodeMirror {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+}
+
+:root:not(.dark) .CodeMirror-gutters {
+  background-color: #f8fafc !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+:root:not(.dark) .CodeMirror-linenumber {
+  color: #64748b !important;
+}
+
+:root:not(.dark) .CodeMirror-selected {
+  background: #bfdbfe !important;
+}
+
+:root:not(.dark) .CodeMirror-focused .CodeMirror-selected {
+  background: #93c5fd !important;
+}
+
+/* Buttons light mode */
+:root:not(.dark) .btn-secondary {
+  background-color: #e2e8f0;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+:root:not(.dark) .btn-secondary:hover {
+  background-color: #cbd5e1;
+  border-color: #94a3b8;
+}
+
+:root:not(.dark) .btn-primary {
+  background-color: #0ea5e9;
+  color: white;
+}
+
+:root:not(.dark) .btn-primary:hover {
+  background-color: #0284c7;
+}
+
+/* Hamburger menu light mode */
 :root:not(.dark) .hamburger-menu {
   background: #ffffff;
   border-left: 1px solid #e2e8f0;
@@ -936,6 +1231,18 @@ body, #root, .btn, .card, .input {
 
 :root:not(.dark) .hamburger-menu-item:hover {
   background: #f1f5f9;
+}
+
+/* Light theme input styling */
+:root:not(.dark) .input {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+}
+
+:root:not(.dark) .input:focus {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
 }
 
 /* Input styling */
@@ -1077,4 +1384,398 @@ body > *:not(.terminal-panel):not(.terminal-panel *) {
   font-family: inherit;
   background-color: var(--bg-primary);
   color: var(--text-primary);
+}
+
+/* ===== COMPREHENSIVE TOOLTIP TRANSPARENCY FIXES ===== */
+/* Force opacity for all tooltips with maximum specificity */
+.tooltip,
+.cm-tooltip,
+.cm-tooltip-hover,
+div[role="tooltip"],
+[class*="tooltip"],
+.CodeMirror-hint,
+.CodeMirror-hints {
+  background-color: #1e293b !important; /* Navy blue background */
+  color: white !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8) !important;
+  border: 1px solid #38bdf8 !important;
+  z-index: 10000 !important;
+  background-image: none !important;
+}
+
+/* Target the specific tooltips in the editor */
+.Display-Output,
+[class*="display-output"],
+[class*="tooltip-content"],
+.cm-tooltip-hover .lcc-tooltip,
+.cm-tooltip .lcc-tooltip {
+  background-color: #1e293b !important;
+  color: white !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Set solid backgrounds for all tooltip children */
+.tooltip *,
+.cm-tooltip *,
+.cm-tooltip-hover *,
+.lcc-tooltip *,
+[class*="tooltip"] * {
+  background-color: transparent !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+}
+
+/* Target tooltip for display output specifically */
+div:has(> div:contains("Display Output")),
+div:has(> div:contains("Display value")),
+div:has(> div:contains("Binary format")),
+.hover-title,
+.hover-syntax,
+.hover-description,
+.hover-binary {
+  background-color: #1e293b !important;
+  opacity: 1 !important;
+  border: 1px solid #38bdf8 !important;
+  color: white !important;
+}
+
+/* Reset any animation or transition that might affect opacity */
+[class*="tooltip"],
+.cm-tooltip,
+.cm-tooltip-hover,
+.lcc-tooltip {
+  animation: none !important;
+  transition: opacity 0.2s ease !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+/* Ensure CodeMirror tooltips are properly styled */
+.CodeMirror .cm-tooltip,
+.CodeMirror .cm-tooltip-hover,
+.CodeMirror-tooltip {
+  background-color: #1e293b !important;
+  color: white !important;
+  border: 1px solid #38bdf8 !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Remove any glassmorphism or transparency effects */
+.lcc-tooltip,
+.cm-tooltip,
+.tooltip {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-blend-mode: normal !important;
+  mix-blend-mode: normal !important;
+}
+
+/* ===== SPECIFIC TOOLTIP FIXES */
+/* Target only tooltip elements without affecting the whole site */
+
+/* Target specific tooltip containers */
+.cm-tooltip.cm-tooltip-hover,
+.cm-tooltip .lcc-tooltip,
+div.lcc-tooltip,
+[role="tooltip"].lcc-tooltip {
+  background-color: #1e293b !important;
+  background-image: none !important;
+  background: #1e293b !important;
+  color: white !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  border: 1px solid #38bdf8 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Force solid background on tooltip content areas */
+.lcc-tooltip > *,
+.cm-tooltip.cm-tooltip-hover > *,
+.cm-tooltip .lcc-tooltip > * {
+  background-color: transparent !important;
+  background: transparent !important;
+  color: inherit !important;
+  opacity: 1 !important;
+}
+
+/* Specifically target the tooltip containers that show in your screenshot */
+.cm-tooltip .hover-title,
+.cm-tooltip .hover-syntax,
+.cm-tooltip .hover-description,
+.lcc-tooltip .hover-title,
+.lcc-tooltip .hover-syntax,
+.lcc-tooltip .hover-description {
+  background-color: transparent !important;
+  background: transparent !important;
+  opacity: 1 !important;
+  color: white !important;
+}
+
+/* Target specific CodeMirror tooltip containers */
+.CodeMirror .lcc-tooltip,
+.CodeMirror .cm-tooltip,
+.cm-editor .lcc-tooltip,
+.cm-editor .cm-tooltip {
+  background-color: #1e293b !important;
+  background: #1e293b !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.CodeMirror .lcc-tooltip,
+.CodeMirror .cm-tooltip,
+.cm-editor .lcc-tooltip,
+.cm-editor .cm-tooltip {
+  background-color: #1e293b !important;
+  background: #1e293b !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Target specific tooltip text content */
+.lcc-tooltip .hover-title,
+.lcc-tooltip .hover-syntax,
+.lcc-tooltip .hover-description,
+.lcc-tooltip .hover-binary,
+.cm-tooltip .hover-title,
+.cm-tooltip .hover-syntax,
+.cm-tooltip .hover-description,
+.cm-tooltip .hover-binary {
+  background-color: transparent !important;
+  background: transparent !important;
+  color: white !important;
+  opacity: 1 !important;
+}
+
+/* Force removal of any glassmorphism or transparency effects on tooltips only */
+.lcc-tooltip,
+.cm-tooltip.cm-tooltip-hover,
+.cm-tooltip .lcc-tooltip {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-blend-mode: normal !important;
+  mix-blend-mode: normal !important;
+  filter: none !important;
+}
+
+/* Reset any animation or transition that might affect tooltip opacity */
+.lcc-tooltip,
+.cm-tooltip.cm-tooltip-hover,
+.cm-tooltip .lcc-tooltip {
+  animation: none !important;
+  transition: opacity 0.2s ease !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+/* ===== AGGRESSIVE TOOLTIP BACKGROUND FIX ===== */
+/* Override any CodeMirror or other CSS that makes tooltips transparent */
+.cm-tooltip,
+.cm-tooltip.cm-tooltip-hover,
+.cm-tooltip .lcc-tooltip,
+.CodeMirror .cm-tooltip,
+.CodeMirror .lcc-tooltip,
+div.lcc-tooltip {
+  background: #1e293b !important;
+  background-color: #1e293b !important;
+  background-image: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #38bdf8 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Force all tooltip content to be visible */
+.cm-tooltip *,
+.lcc-tooltip *,
+.cm-tooltip-hover * {
+  opacity: 1 !important;
+  color: white !important;
+}
+
+/* Ensure tooltip wrapper has solid background */
+.cm-tooltip-hover {
+  background: #1e293b !important;
+  background-color: #1e293b !important;
+  border: none !important;
+  opacity: 1 !important;
+}
+
+/* Target any potential transparent overlay */
+.cm-tooltip-hover > * {
+  background: transparent !important;
+  opacity: 1 !important;
+}
+
+/* ===== MOBILE MENU FIX ===== */
+/* Ensure hamburger menu button is clickable */
+#hamburger-menu-btn {
+  z-index: 10001 !important;
+  pointer-events: auto !important;
+  position: relative !important;
+}
+
+/* Ensure header doesn't block clicks */
+header {
+  z-index: 1000;
+}
+
+/* Make sure button is visible and clickable on all screen sizes */
+#hamburger-menu-btn {
+  display: block !important;
+  z-index: 10001 !important;
+  pointer-events: auto !important;
+}
+
+.hamburger-menu {
+  z-index: 10000 !important;
+}
+
+/* ===== HEADER LAYOUT IMPROVEMENTS ===== */
+/* Improved header spacing and responsive layout */
+.header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 60px;
+  padding: 0 16px;
+  gap: 12px;
+}
+
+/* Left side improvements */
+.header .flex.items-center.space-x-4 {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Right side improvements */
+.header .flex.items-center.space-x-2 {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Header button styling */
+.header .btn {
+  padding: 8px 12px;
+  min-width: auto;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+/* Responsive header adjustments */
+@media (max-width: 1024px) {
+  .header .container {
+    padding: 0 12px;
+    gap: 8px;
+  }
+  
+  .header .flex.items-center.space-x-4 {
+    gap: 12px;
+  }
+  
+  .header .flex.items-center.space-x-2 {
+    gap: 6px;
+  }
+  
+  .header .btn {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header .container {
+    padding: 0 8px;
+    gap: 6px;
+  }
+  
+  .header .flex.items-center.space-x-4 {
+    gap: 8px;
+  }
+  
+  .header .flex.items-center.space-x-2 {
+    gap: 4px;
+  }
+}
+
+/* Prevent header button overlap */
+.header button {
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.header button:last-child {
+  margin-right: 0;
+}
+
+.header .space-x-2 > * + * {
+  margin-left: 8px;
+}
+
+/* Header layout and spacing improvements completed */
+
+/* Fix header button spacing and tooltip behavior */
+.header .flex.items-center.space-x-2 {
+  gap: 0.5rem;
+}
+
+/* Prevent automatic tooltip display */
+button[title] {
+  position: relative;
+}
+
+/* Hide default browser tooltips initially */
+button[title]:hover::before,
+button[title]:hover::after {
+  display: none !important;
+}
+
+/* Only show tooltips on longer hover */
+button[title]:hover {
+  transition: all 0.3s ease;
+}
+
+/* Custom tooltip behavior for header buttons */
+.header button {
+  margin-right: 0.25rem;
+  position: relative;
+}
+
+.header button:last-child {
+  margin-right: 0;
+}
+
+/* Improve button spacing in header */
+.header .space-x-2 > * + * {
+  margin-left: 0.5rem;
+}
+
+/* Specific spacing for theme toggle and hamburger menu */
+#btn-theme-toggle {
+  margin-right: 0.5rem;
+}
+
+#hamburger-menu-btn {
+  margin-left: 0.25rem;
 }

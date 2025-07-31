@@ -15,7 +15,8 @@ function Header() {
     isProcessing,
     currentFileName,
     loadDemoFile,
-    runProgram
+    runProgram,
+    addTerminalOutput
   } = useApp();
 
   const handleRun = async () => {
@@ -24,6 +25,10 @@ function Header() {
 
   const handleLoadDemo = async () => {
     await loadDemoFile('a1test.a');
+  };
+
+  const handleOptions = () => {
+    addTerminalOutput('Options panel coming soon! Use the hamburger menu for now.', 'text-blue-400');
   };
 
   return (
@@ -35,9 +40,9 @@ function Header() {
     >
       <div className="container mx-auto px-6 py-4 flex justify-between items-center min-w-0">
         {/* Left side - Logo and main actions */}
-        <div className="flex items-center space-x-6 min-w-0 flex-1">
+        <div className="flex items-center space-x-4 min-w-0 flex-1">
           <motion.h1 
-            className="text-2xl font-bold text-primary-400 flex-shrink-0"
+            className="text-xl md:text-2xl font-bold text-primary-400 flex-shrink-0"
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
@@ -46,28 +51,26 @@ function Header() {
           
           {/* Current file indicator - responsive */}
           <motion.div 
-            className="hidden sm:block text-base text-secondary-300 truncate min-w-0 flex-1 px-4 py-2 bg-secondary-700 rounded-lg"
+            className="hidden sm:block text-sm md:text-base text-secondary-300 truncate min-w-0 flex-1 px-3 py-2 bg-secondary-700 rounded-lg max-w-xs lg:max-w-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            title={currentFileName}
           >
             <i className="fas fa-file-code mr-2 text-primary-400" />
             {currentFileName}
           </motion.div>
           
           {/* Desktop action buttons */}
-          <div className="hidden md:flex space-x-3 flex-shrink-0">
+          <div className="hidden lg:flex space-x-2 flex-shrink-0">
             <Button
               variant="primary"
               size="md"
               onClick={handleRun}
               disabled={isProcessing}
               icon="fas fa-play"
-              title={isProcessing ? "Program is running..." : "Run the current program"}
-              className="px-6"
+              className="px-4"
             >
-              {isProcessing ? 'Running...' : 'Run Program'}
+              {isProcessing ? 'Running...' : 'Run'}
             </Button>
             
             <Button
@@ -75,34 +78,40 @@ function Header() {
               size="md"
               onClick={handleLoadDemo}
               icon="fas fa-file-code"
-              title="Load demo file (a1test.a)"
-              className="px-6"
+              className="px-4"
             >
-              Load Demo
+              Demo
             </Button>
           </div>
         </div>
 
-        {/* Right side - Theme toggle and menu */}
-        <div className="flex items-center space-x-3 flex-shrink-0">
+        {/* Right side - Theme toggle, Options, and menu */}
+        <div className="flex items-center space-x-2 flex-shrink-0">
+          {/* Options button - desktop only */}
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={handleOptions}
+            icon="fas fa-cog"
+            className="transition-transform hover:scale-110 px-3 hidden md:block"
+          />
+          
           {/* Theme toggle button */}
           <Button
             variant="secondary"
             size="md"
             onClick={toggleDarkMode}
             icon={isDarkMode ? "fas fa-sun" : "fas fa-moon"}
-            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            className="transition-transform hover:scale-110 px-4"
+            className="transition-transform hover:scale-110 px-3"
           />
           
-          {/* Hamburger menu button */}
+          {/* Hamburger menu button - shows on all screen sizes */}
           <Button
             variant="secondary"
             size="md"
             onClick={toggleHamburgerMenu}
             icon="fas fa-bars"
-            title="Open menu"
-            className="transition-transform hover:scale-110 px-4"
+            className="transition-transform hover:scale-110 px-3"
           />
         </div>
       </div>

@@ -1,0 +1,89 @@
+/* Ultra-aggressive tooltip fix */
+
+/* Target the tooltips directly */
+.cm-tooltip,
+.cm-tooltip-hover,
+.lcc-tooltip,
+.tooltip,
+.tooltip-fixed,
+[data-fixed-bg="true"],
+div[class*="tooltip"],
+div[role="tooltip"] {
+  background-color: #1e293b !important;
+  background: #1e293b !important;
+  background-image: none !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  border: 1px solid #38bdf8 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Force tooltip content to be white and visible */
+.cm-tooltip *,
+.cm-tooltip-hover *,
+.lcc-tooltip *,
+.tooltip * {
+  color: white !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+}
+
+/* Target specific tooltip content elements */
+.hover-title,
+.hover-syntax,
+.hover-description,
+.hover-binary,
+.binary-format,
+div:has(> .binary-format),
+div:has(> .hover-title),
+div:has(> .hover-syntax) {
+  background-color: #1e293b !important;
+  background: #1e293b !important;
+  color: white !important;
+  opacity: 1 !important;
+}
+
+/* Extra specificity by targeting body and html */
+body .cm-tooltip,
+body .cm-tooltip-hover,
+body .lcc-tooltip,
+html .cm-tooltip,
+html .cm-tooltip-hover,
+html .lcc-tooltip {
+  background-color: #1e293b !important;
+  background: #1e293b !important;
+  opacity: 1 !important;
+}
+
+/* Ensure no transparency anywhere */
+:root {
+  --tooltip-bg: #1e293b !important;
+}
+
+/* Force solid background even if element is added dynamically */
+div[data-fixed-bg="true"] {
+  background-color: #1e293b !important;
+  background: #1e293b !important;
+  opacity: 1 !important;
+}
+
+/* Target elements with specific content */
+div:contains("Display Output"),
+div:contains("Binary format"),
+div:contains("Display value") {
+  background-color: #1e293b !important;
+  background: #1e293b !important;
+  opacity: 1 !important;
+}
+
+/* Reset any animation or transition that might cause transparency */
+.cm-tooltip,
+.cm-tooltip-hover,
+.lcc-tooltip {
+  transition: none !important;
+  animation: none !important;
+}
