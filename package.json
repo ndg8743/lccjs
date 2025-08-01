@@ -9,7 +9,8 @@
     "server": "nodemon server.js",
     "dev:watch": "concurrently \"npm run watch\" \"npm run server\"",
     "lint": "eslint src --ext .js,.jsx --fix",
-    "format": "prettier --write \"src/**/*.{js,jsx,css,md}\""
+    "format": "prettier --write \"src/**/*.{js,jsx,css,md}\"",
+    "clean": "powershell -Command \"Remove-Item -Path node_modules -Recurse -Force -ErrorAction SilentlyContinue; Remove-Item package-lock.json -Force -ErrorAction SilentlyContinue; npm cache clean --force; npm install\""
   },
   "dependencies": {
     "@codemirror/language": "^6.0.0",

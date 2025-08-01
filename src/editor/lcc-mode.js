@@ -25,18 +25,18 @@ const lccLanguage = StreamLanguage.define({
     }
 
     // Directives (starting with dot)
-    if (stream.match(/^\.[a-zA-Z]+/)) {
-      return 'keyword';
+    if (stream.match(/^\.(word|fill|string|stringz|str|blkw|ascii|asciiz|byte|data|text|global|extern|export|import|include|org|equ|set|align|space|section)\b/i)) {
+      return 'meta';
     }
 
-    // Instructions
+    // Instructions - purple in VSCode
     if (stream.match(/^(add|sub|mul|div|rem|and|or|xor|not|mov|ld|st|lea|ldr|str|push|pop|br|brz|brn|brp|brlt|brgt|brc|bral|jmp|jsr|ret|bl|blr|cmp|srl|sra|sll|rol|ror|mvr|sext|mvi|halt|nl|dout|udout|hout|aout|sout|din|hin|ain|sin|clear|sleep|nbain|cursor|srand|rand|millis|resetc|m|r|s|bp)\b/i)) {
       return 'keyword';
     }
 
-    // Registers
+    // Registers - cyan in VSCode
     if (stream.match(/^r[0-7]\b|^(sp|fp|lr)\b/i)) {
-      return 'variable';
+      return 'atom';
     }
 
     // Numbers (decimal, hex, binary)

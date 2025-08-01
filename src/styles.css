@@ -36,53 +36,93 @@
   }
 }
 
-/* Custom CodeMirror styling */
-.cm-s-lcc-light .cm-keyword {
-  color: #2563eb; /* blue-600 */
+/* VSCode-style CodeMirror colors for LCC */
+/* Dark theme - matches VSCode Dark+ */
+.cm-editor.cm-focused {
+  outline: none !important;
 }
 
-.cm-s-lcc-light .cm-def {
-  color: #1d4ed8; /* blue-700 */
+.cm-editor .cm-line {
+  padding-left: 16px;
 }
 
-.cm-s-lcc-light .cm-variable {
-  color: #1f2937; /* gray-800 */
+/* Instructions (keywords) - purple */
+.cm-keyword {
+  color: #c586c0 !important;
 }
 
-.cm-s-lcc-light .cm-number {
-  color: #1e40af; /* blue-900 */
+/* Registers (atoms) - cyan */
+.cm-atom {
+  color: #4ec9b0 !important;
 }
 
-.cm-s-lcc-light .cm-string {
-  color: #3b82f6; /* blue-500 */
+/* Labels - light blue */
+.cm-labelName {
+  color: #4fc1ff !important;
 }
 
-.cm-s-lcc-light .cm-comment {
-  color: #6b7280; /* gray-500 */
+/* Numbers - light green */
+.cm-number {
+  color: #b5cea8 !important;
 }
 
-.cm-s-lcc-dark .cm-keyword {
-  color: #60a5fa; /* blue-400 */
+/* Strings - orange */
+.cm-string {
+  color: #ce9178 !important;
 }
 
-.cm-s-lcc-dark .cm-def {
-  color: #93c5fd; /* blue-300 */
+/* Comments - green */
+.cm-comment {
+  color: #6a9955 !important;
+  font-style: italic;
 }
 
-.cm-s-lcc-dark .cm-variable {
-  color: #e5e7eb; /* gray-200 */
+/* Directives (meta) - blue */
+.cm-meta {
+  color: #569cd6 !important;
 }
 
-.cm-s-lcc-dark .cm-number {
-  color: #bfdbfe; /* blue-200 */
+/* Variables/identifiers - light yellow */
+.cm-variableName {
+  color: #dcdcaa !important;
 }
 
-.cm-s-lcc-dark .cm-string {
-  color: #3b82f6; /* blue-500 */
+/* Operators - white/light gray */
+.cm-operator {
+  color: #d4d4d4 !important;
 }
 
-.cm-s-lcc-dark .cm-comment {
-  color: #9ca3af; /* gray-400 */
+/* Light theme adjustments */
+:root:not(.dark) .cm-keyword {
+  color: #af00db !important;
+}
+
+:root:not(.dark) .cm-atom {
+  color: #267f99 !important;
+}
+
+:root:not(.dark) .cm-labelName {
+  color: #0070c1 !important;
+}
+
+:root:not(.dark) .cm-number {
+  color: #098658 !important;
+}
+
+:root:not(.dark) .cm-string {
+  color: #a31515 !important;
+}
+
+:root:not(.dark) .cm-comment {
+  color: #008000 !important;
+}
+
+:root:not(.dark) .cm-meta {
+  color: #0000ff !important;
+}
+
+:root:not(.dark) .cm-variableName {
+  color: #795e26 !important;
 }
 
 /* Command palette styling */

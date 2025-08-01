@@ -102,11 +102,12 @@ const assemblyInfo = {
   },
   "lea": {
     descriptive_name: "Load Effective Address",
-    description: "dr = PC + offset",
+    description: "dr = pc + pcoffset9",
     syntax: "lea dr, label",
-    explanation: "Loads the effective address (PC + offset) into destination register.",
+    explanation: "The LEA instruction is used to load the effective address of a memory location into a register. The effective address is calculated by adding the Program Counter (PC) to the 9-bit offset field. The offset field is sign-extended to 16 bits and added to the PC",
     flags_set: "",
-    binary_format: "1110 dr pcoffset9"
+    binary_format: "1110 dr pcoffset9",
+    offset: "0 0000 1101 = 13 0xd"
   },
   "br": {
     descriptive_name: "Branch",
@@ -465,16 +466,88 @@ const assemblyInfo = {
 /**
  * Creates a tooltip for assembly instructions
  */
-function createTooltip(info) {
+function createTooltip(info, line) {
   const dom = document.createElement('div');
   dom.className = 'lcc-tooltip';
+  
+  // Parse binary format to show bit positions  
+  let binaryFormatted = info.binary_format;
+  if (info.binary_format && info.binary_format.includes(' ')) {
+    const parts = info.binary_format.split(' ');
+    binaryFormatted = parts.map((part, index) => {
+      if (part === 'dr' || part === 'sr' || part === 'sr1' || part === 'sr2' || part === 'baser') {
+        return `${part}(3)`;
+      } else if (part.match(/^\d+$/)) {
+        return part;
+      } else if (part === 'pcoffset9') {
+        return 'pcoffset(9)';
+      } else if (part === 'offset6') {
+        return 'offset(6)';
+      }
+      return part;
+    }).join(' ');
+  }
+  
+  // Calculate example offset if this is a branch/lea instruction
+  let offsetExample = '';
+  if (info.syntax.includes('label') && line) {
+    offsetExample = `
+    <div class="hover-offset-calc">
+      <span class="hover-comment">  ; Offset: 0 0000 0000 = 0 0x0</span>
+    </div>
+    <div class="hover-pc-calc">
+      <span class="hover-comment">  ; PC+offset: PC + 0x0 = PC+0 ; line ${line}</span>
+    </div>`;
+  }
+  
   dom.innerHTML = `
-    <div class="hover-title">${info.descriptive_name}</div>
-    <div class="hover-syntax"><code>${info.syntax}</code></div>
-    <div class="hover-description">${info.description}</div>
-    <div class="hover-explanation">${info.explanation}</div>
-    ${info.flags_set ? `<div class="hover-flags"><strong>Flags set:</strong> ${info.flags_set.toUpperCase()}</div>` : ''}
-    <div class="hover-binary"><strong>Binary format:</strong> <code>${info.binary_format}</code></div>
+    <div class="hover-header">
+      <span class="hover-instruction-name">${info.syntax.split(' ')[0]}</span>
+      <span class="hover-mnemonic">${info.descriptive_name}</span>
+    </div>
+    <div class="hover-divider"></div>
+    
+    <div class="hover-section">
+      <div class="hover-label">Syntax:</div>
+      <div class="hover-value hover-syntax">${info.syntax}</div>
+    </div>
+    
+    <div class="hover-section">
+      <div class="hover-label">Operation:</div>
+      <div class="hover-value hover-operation">${info.description}</div>
+    </div>
+    
+    <div class="hover-section">
+      <div class="hover-label">Binary Format:</div>
+      <div class="hover-value hover-binary">
+        <span class="hover-opcode">${info.binary_format.split(' ')[0]}</span>
+        <span class="hover-operands">${binaryFormatted.substring(4)}</span>
+      </div>
+    </div>
+    
+    ${info.offset ? `
+    <div class="hover-section">
+      <div class="hover-label">Example Offset:</div>
+      <div class="hover-value">${info.offset}</div>
+    </div>
+    ` : ''}
+    
+    <div class="hover-section">
+      <div class="hover-label">Description:</div>
+      <div class="hover-value hover-description">${info.explanation}</div>
+    </div>
+    
+    <div class="hover-section">
+      <div class="hover-label">Flags Affected:</div>
+      <div class="hover-value hover-flags-value">
+        ${info.flags_set ? 
+          info.flags_set.toUpperCase().split('').map(f => 
+            `<span class="hover-flag">${f}</span>`
+          ).join(' ') 
+          : '<span class="hover-no-flags">None</span>'
+        }
+      </div>
+    </div>
   `;
   return dom;
 }
@@ -522,7 +595,8 @@ const lccHoverTooltip = hoverTooltip((view, pos, side) => {
     end: from + wordEnd,
     above: false,
     create: () => {
-      const tooltip = createTooltip(info);
+      const line = view.state.doc.lineAt(pos).number;
+      const tooltip = createTooltip(info, line);
       // Add a class to help with animation
       setTimeout(() => {
         tooltip.classList.add('showing');
@@ -577,28 +651,20 @@ function EditorPanel() {
         overflow: 'auto',
       },
       '.cm-tooltip': {
-        backgroundColor: '#1e293b !important',
-        border: '1px solid #38bdf8 !important',
+        backgroundColor: 'transparent !important',
+        border: 'none !important',
         padding: '0 !important',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.8) !important',
-        position: 'absolute !important',
-        zIndex: '10000 !important',
+        boxShadow: 'none !important',
       },
-      '.cm-tooltip.cm-tooltip-section': {
-        backgroundColor: '#1e293b !important',
-        border: '1px solid #38bdf8 !important',
+      '.cm-tooltip.cm-tooltip-hover': {
+        backgroundColor: 'transparent !important',
+        border: 'none !important',
         padding: '0 !important',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.8) !important',
-        position: 'absolute !important',
-        zIndex: '10000 !important',
+        boxShadow: 'none !important',
       },
-      '.cm-tooltip .cm-tooltip-section': {
-        backgroundColor: '#1e293b !important',
-        border: '1px solid #38bdf8 !important',
-        padding: '0 !important',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.8) !important',
-        position: 'absolute !important',
-        zIndex: '10000 !important',
+      '.cm-tooltip .lcc-tooltip': {
+        display: 'block !important',
+        opacity: '1 !important',
       },
     }),
     EditorView.lineWrapping,

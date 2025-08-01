@@ -143,138 +143,143 @@ body, #root, .btn, .card, .input {
   font-weight: bold;
 }
 
-/* LCC Tooltip styling */
+/* LCC Tooltip styling - VSCode style */
 .lcc-tooltip {
   position: fixed;
   z-index: 10000;
-  max-width: 300px;
-  background: #1e293b;
-  border: 1px solid #38bdf8;
-  border-radius: 8px;
-  padding: 12px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 12px;
-  line-height: 1.4;
-  color: #e2e8f0;
-  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.2), 
-              0 8px 10px -6px rgba(0, 0, 0, 0.1),
-              0 0 0 1px rgba(56, 189, 248, 0.2);
-  display: none;
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+  min-width: 650px;
+  max-width: 850px;
+  background: #252526;
+  border: 1px solid #454545;
+  border-radius: 4px;
+  padding: 12px 16px;
+  font-family: 'Consolas', 'Monaco', 'Lucida Console', 'Courier New', monospace;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #d4d4d4;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  display: block;
+  opacity: 1;
+  transition: opacity 0.2s ease-in-out;
   pointer-events: none;
-  transform: translateY(0);
   top: 0;
   left: 0;
 }
 
-/* Add a slight animation when showing */
-.lcc-tooltip.showing {
-  transform: translateY(-3px);
+/* Tooltip Header */
+.lcc-tooltip .hover-header {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 8px;
+  font-size: 16px;
 }
 
-.lcc-tooltip .hover-title {
-  font-weight: 600;
-  color: #38bdf8;
-  margin-bottom: 8px;
+.lcc-tooltip .hover-instruction-name {
+  color: #4fc1ff;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-right: 10px;
+  font-size: 18px;
+}
+
+.lcc-tooltip .hover-mnemonic {
+  color: #b5cea8;
+  font-style: italic;
   font-size: 14px;
 }
 
+.lcc-tooltip .hover-divider {
+  border-bottom: 1px solid #454545;
+  margin-bottom: 10px;
+}
+
+/* Tooltip Sections */
+.lcc-tooltip .hover-section {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.lcc-tooltip .hover-label {
+  color: #9cdcfe;
+  font-weight: bold;
+  min-width: 140px;
+  margin-right: 12px;
+  font-size: 14px;
+}
+
+.lcc-tooltip .hover-value {
+  color: #d4d4d4;
+  flex: 1;
+  font-size: 14px;
+}
+
+/* Specific value styling */
 .lcc-tooltip .hover-syntax {
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  padding: 6px 8px;
-  margin-bottom: 10px;
-  font-family: 'Fira Code', monospace;
-  font-size: 12px;
+  color: #dcdcaa;
+  font-family: 'Consolas', monospace;
+  font-weight: bold;
 }
 
-.lcc-tooltip .hover-syntax code {
-  color: #7dd3fc;
-  background: none;
-  font-family: inherit;
-}
-
-.lcc-tooltip .hover-description {
-  color: #cbd5e1;
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-.lcc-tooltip .hover-explanation {
-  color: #94a3b8;
-  margin-bottom: 10px;
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-.lcc-tooltip .hover-flags {
-  color: #fbbf24;
-  margin-bottom: 8px;
-  font-size: 11px;
-  padding: 2px 0;
+.lcc-tooltip .hover-operation {
+  color: #ce9178;
+  font-style: italic;
 }
 
 .lcc-tooltip .hover-binary {
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  padding: 6px 8px;
-  font-family: 'Fira Code', monospace;
-  font-size: 11px;
-  color: #64748b;
+  font-family: 'Consolas', monospace;
 }
 
-.lcc-tooltip .hover-binary code {
-  color: #94a3b8;
-  background: none;
-  font-family: inherit;
+.lcc-tooltip .hover-opcode {
+  color: #c586c0;
+  font-weight: bold;
+  margin-right: 8px;
 }
 
-/* Light mode tooltips */
+.lcc-tooltip .hover-operands {
+  color: #dcdcaa;
+}
+
+.lcc-tooltip .hover-description {
+  line-height: 1.6;
+  color: #cccccc;
+}
+
+.lcc-tooltip .hover-flag {
+  display: inline-block;
+  background: #3c3c3c;
+  color: #ffd700;
+  padding: 2px 8px;
+  margin-right: 6px;
+  border-radius: 3px;
+  font-weight: bold;
+  font-size: 13px;
+  border: 1px solid #515151;
+}
+
+.lcc-tooltip .hover-no-flags {
+  color: #808080;
+  font-style: italic;
+}
+
+/* Light mode tooltips - keep VSCode dark theme style for consistency */
 :root:not(.dark) .lcc-tooltip {
-  background: #ffffff;
-  border: 1px solid #0284c7;
-  color: #1e293b;
-  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1), 
-              0 8px 10px -6px rgba(0, 0, 0, 0.05),
-              0 0 0 1px rgba(2, 132, 199, 0.2);
+  background: #1e1e1e;
+  border: 1px solid #454545;
+  color: #d4d4d4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-:root:not(.dark) .lcc-tooltip .hover-title {
-  color: #0284c7;
+:root:not(.dark) .lcc-tooltip .hover-opcode {
+  color: #c586c0;
 }
 
-:root:not(.dark) .lcc-tooltip .hover-syntax {
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
+:root:not(.dark) .lcc-tooltip .hover-operands {
+  color: #dcdcaa;
 }
 
-:root:not(.dark) .lcc-tooltip .hover-syntax code {
-  color: #0369a1;
-}
-
-:root:not(.dark) .lcc-tooltip .hover-description {
-  color: #334155;
-}
-
-:root:not(.dark) .lcc-tooltip .hover-explanation {
-  color: #475569;
-}
-
-:root:not(.dark) .lcc-tooltip .hover-flags {
-  color: #b45309;
-}
-
-:root:not(.dark) .lcc-tooltip .hover-binary {
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  color: #475569;
-}
-
-:root:not(.dark) .lcc-tooltip .hover-binary code {
-  color: #334155;
+:root:not(.dark) .lcc-tooltip .hover-comment {
+  color: #6a9955;
 }
 .command-palette {
   position: fixed;
