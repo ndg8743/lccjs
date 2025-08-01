@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../store/AppStore';
 import Header from './Header';
 import EditorPanel from './EditorPanel';
 import TerminalPanel from './TerminalPanel';
-import FileExplorer from './FileExplorer';
+import FileSidebar from './FileSidebar';
 import CommandPalette from './CommandPalette';
+import InstructionReference from './visualizer/InstructionReference';
 import HamburgerMenu from './HamburgerMenu';
 import MobileLayout from './MobileLayout';
 
@@ -21,6 +22,8 @@ function Layout() {
   const [editorHeight, setEditorHeight] = useState(60); // Percentage for vertical layout
   const [editorWidth, setEditorWidth] = useState(60); // Percentage for horizontal layout
   const [isDragging, setIsDragging] = useState(false);
+  const [showFileSidebar, setShowFileSidebar] = useState(true);
+  const [showReference, setShowReference] = useState(false);
   const containerRef = useRef(null);
 
   // Check for mobile and wide screen sizes
@@ -114,25 +117,41 @@ function Layout() {
 
   // Desktop layout
   return (
-    <motion.div 
-      className="flex flex-col h-screen overflow-hidden bg-gray-900"
+        <motion.div
+      className={`flex flex-col h-screen overflow-hidden ${
+        isDarkMode ? 'bg-gray-900' : 'bg-gray-100'
+      }`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.1 }}
     >
       {/* Header */}
-      <Header />
+      <Header 
+        showFileSidebar={showFileSidebar}
+        onToggleFileSidebar={() => setShowFileSidebar(!showFileSidebar)}
+        showReference={showReference}
+        onToggleReference={() => setShowReference(!showReference)}
+      />
       
       {/* Main content area */}
       <main className="flex-1 flex overflow-hidden">
-        {/* File Explorer - Resizable sidebar */}
+        {/* File Sidebar */}
         <motion.div 
-          className="border-r border-secondary-700 bg-secondary-800 flex-shrink-0"
+          className={`w-80 border-r flex-shrink-0 ${
+            isDarkMode 
+              ? 'border-gray-700 bg-gray-800' 
+              : 'border-gray-300 bg-white'
+          }`}
           initial={{ width: 0, opacity: 0 }}
-          animate={{ width: 'auto', opacity: 1 }}
-          transition={{ duration: 0.2, delay: 0.1 }}
+          animate={{ width: showFileSidebar ? 320 : 0, opacity: showFileSidebar ? 1 : 0 }}
+          transition={{ duration: 0.2 }}
         >
-          <FileExplorer />
+          {showFileSidebar && (
+            <FileSidebar
+              isDarkMode={isDarkMode}
+              onFileSelect={() => {}} // File selection is handled by the store
+            />
+          )}
         </motion.div>
         
         {/* Editor and Terminal Container */}
@@ -220,6 +239,16 @@ function Layout() {
       
       {/* Command Palette */}
       {isCommandPaletteOpen && <CommandPalette />}
+      
+      {/* Instruction Reference */}
+      <AnimatePresence>
+        {showReference && (
+          <InstructionReference
+            onClose={() => setShowReference(false)}
+            isDarkMode={isDarkMode}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

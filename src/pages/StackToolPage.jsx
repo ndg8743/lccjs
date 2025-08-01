@@ -125,7 +125,7 @@ function StackToolPage() {
 
   // Handle file selection
   const handleFileSelect = (fileName) => {
-    const { fileTree } = useApp.getState();
+    const { fileTree } = useApp();
     const fileContent = fileTree[fileName];
     if (fileContent) {
       setCode(fileContent);

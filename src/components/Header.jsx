@@ -7,7 +7,7 @@ import Button from './ui/Button';
  * Header component containing the main navigation and action buttons
  * @returns {JSX.Element} The application header
  */
-function Header() {
+function Header({ showFileSidebar, onToggleFileSidebar, showReference, onToggleReference }) {
   const { 
     isDarkMode, 
     toggleDarkMode, 
@@ -46,6 +46,18 @@ function Header() {
       <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center min-w-0">
         {/* Left side - Logo and main actions */}
         <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+          {/* Files Button */}
+          <Button
+            onClick={onToggleFileSidebar}
+            variant={showFileSidebar ? "primary" : "secondary"}
+            size="sm"
+            className="flex items-center gap-2"
+            title="Toggle Files Panel"
+          >
+            <i className="fas fa-folder-open"></i>
+            <span className="hidden sm:inline">Files</span>
+          </Button>
+          
           <motion.h1 
             className="text-xl md:text-2xl font-bold text-primary-400 flex-shrink-0"
             whileHover={{ scale: 1.05 }}
@@ -120,13 +132,14 @@ function Header() {
             className="transition-transform hover:scale-110 px-3 hidden md:block"
           />
           
-          {/* Theme toggle button */}
+          {/* Reference button */}
           <Button
-            variant="secondary"
+            variant={showReference ? "primary" : "secondary"}
             size="md"
-            onClick={toggleDarkMode}
-            icon={isDarkMode ? "fas fa-sun" : "fas fa-moon"}
+            onClick={onToggleReference}
+            icon="fas fa-book"
             className="transition-transform hover:scale-110 px-3"
+            title="Toggle Reference"
           />
           
           {/* Hamburger menu button - shows on all screen sizes */}
