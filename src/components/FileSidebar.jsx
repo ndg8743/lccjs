@@ -37,9 +37,14 @@ function FileSidebar({ isDarkMode, onFileSelect }) {
   }, [setActiveFile, onFileSelect]);
 
   // Handle file name editing
-  const handleFileNameEdit = useCallback(() => {
+  const handleFileNameEdit = useCallback((fileName) => {
+    // Set the current file to the one being renamed
+    const fileIndex = openFiles.indexOf(fileName);
+    if (fileIndex !== -1) {
+      setActiveFile(fileIndex);
+    }
     setIsRenaming(true);
-  }, [setIsRenaming]);
+  }, [setIsRenaming, setActiveFile, openFiles]);
 
   // Handle file upload
   const handleFileUpload = useCallback(async (event) => {
@@ -193,7 +198,7 @@ function FileSidebar({ isDarkMode, onFileSelect }) {
               >
                 <div
                   onClick={() => handleFileSelect(fileName, index)}
-                  onDoubleClick={handleFileNameEdit}
+                  onDoubleClick={() => handleFileNameEdit(fileName)}
                   className={`group px-4 py-2 cursor-pointer flex items-center justify-between ${
                     activeFileIndex === index
                       ? isDarkMode 

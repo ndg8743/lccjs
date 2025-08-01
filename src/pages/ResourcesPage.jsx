@@ -1,13 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useApp } from '../store/AppStore';
 import Button from '../components/ui/Button';
+import Header from '../components/Header';
 
 /**
  * Resources page component displaying useful LCC learning materials
  */
 function ResourcesPage() {
   const { isDarkMode, toggleDarkMode } = useApp();
+  const [showFileSidebar, setShowFileSidebar] = useState(false);
+  const [showReference, setShowReference] = useState(false);
 
   // Set dark mode on mount
   useEffect(() => {
@@ -214,26 +217,26 @@ function ResourcesPage() {
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
       {/* Header */}
+      <Header 
+        showFileSidebar={showFileSidebar}
+        onToggleFileSidebar={() => setShowFileSidebar(!showFileSidebar)}
+        showReference={showReference}
+        onToggleReference={() => setShowReference(!showReference)}
+      />
+      
+      {/* Resources Sub-Header */}
       <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b`}>
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => window.location.href = '/'}
-              className={`px-3 py-2 rounded-md transition-colors ${
-                isDarkMode
-                  ? 'text-gray-300 hover:text-white hover:bg-gray-700'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
-              }`}
-            >
-              <i className="fas fa-arrow-left mr-2"></i>
-              Back to IDE
-            </button>
-            <Button
-              variant="secondary"
-              onClick={toggleDarkMode}
-              icon={isDarkMode ? "fas fa-sun" : "fas fa-moon"}
-            />
-          </div>
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+          <h2 className="text-lg font-semibold">Learning Resources</h2>
+          <Button
+            onClick={() => window.location.href = '/'}
+            variant="ghost"
+            size="sm"
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <i className="fas fa-arrow-left mr-2"></i>
+            Back to IDE
+          </Button>
         </div>
       </div>
 

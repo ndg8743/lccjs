@@ -13,6 +13,7 @@ import FileSelector from '../components/visualizer/FileSelector';
 import FileSidebar from '../components/FileSidebar';
 import Button from '../components/ui/Button';
 import Panel from '../components/ui/Panel';
+import Header from '../components/Header';
 
 /**
  * LCC Stack Visualizer Tool Page
@@ -227,10 +228,61 @@ function StackToolPage() {
     return true;
   }, [updateState]);
 
+  // Run to completion with correct output
+  const runToCompletion = useCallback(async () => {
+    if (!assembleCode(code)) {
+      return;
+    }
+    
+    setIsRunning(true);
+    setCurrentLine(-1);
+    
+    // Get correct output from worker
+    try {
+      const { runProgram, terminalOutput } = useApp.getState();
+      const initialOutputLength = terminalOutput.length;
+      
+      // Set the current file content in the store
+      const { setEditorContent, setCurrentFileName } = useApp.getState();
+      setEditorContent(code);
+      setCurrentFileName(selectedFile || 'program.a');
+      
+      await runProgram(); // This will generate the correct output
+      
+      // Extract the program output from terminal
+      const newOutput = terminalOutput.slice(initialOutputLength);
+      const programOutput = newOutput
+        .filter(line => !line.includes('Running program') && !line.includes('✓') && !line.includes('✗'))
+        .join('\n');
+      
+      if (programOutput) {
+        setOutput(programOutput.split('\n').filter(line => line.trim() !== ''));
+      }
+    } catch (error) {
+      console.warn('Worker execution failed:', error);
+    }
+    
+    // Also run the simulator to completion (for visualization state)
+    try {
+      while (simulatorRef.current && simulatorRef.current.running && simulatorRef.current.instructionsExecuted < 10000) {
+        if (!executeStep()) {
+          break;
+        }
+      }
+    } catch (error) {
+      setError(`Runtime error: ${error.message}`);
+    }
+    
+    setIsRunning(false);
+  }, [code, assembleCode, executeStep, selectedFile, updateState, setError]);
+
   // Step handler
   const handleStep = useCallback((steps = 1) => {
     if (steps === 'run') {
-      // Run continuously
+      // Run to completion
+      runToCompletion();
+    } else if (steps === 'step-run') {
+      // Run continuously with steps
       setIsRunning(true);
       const interval = setInterval(() => {
         if (!executeStep()) {
@@ -378,48 +430,31 @@ function StackToolPage() {
   return (
     <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       {/* Header */}
-      <header className="bg-gray-800 text-white px-6 py-3 flex items-center justify-between shadow-lg">
+      <Header 
+        showFileSidebar={showFileSidebar}
+        onToggleFileSidebar={() => setShowFileSidebar(!showFileSidebar)}
+        showReference={showReference}
+        onToggleReference={() => setShowReference(!showReference)}
+      />
+      
+      {/* Visualizer Sub-Header */}
+      <div className="bg-gray-800 text-white px-6 py-2 flex items-center justify-between border-b border-gray-700">
         <div className="flex items-center space-x-4">
-          <h1 className="text-xl font-bold">LCC Stack Visualizer</h1>
+          <h2 className="text-lg font-semibold">Stack Visualizer</h2>
           <span className="text-sm text-gray-400">
             {selectedFile || 'No file selected'}
           </span>
         </div>
         
-        <div className="flex items-center space-x-4">
-          <Button 
-            size="sm" 
-            variant="ghost"
-            onClick={() => setShowFileSidebar(!showFileSidebar)}
-          >
-            📁 Files
-          </Button>
-          
-          <Button 
-            size="sm" 
-            variant="ghost"
-            onClick={() => setShowReference(!showReference)}
-          >
-            📚 Reference
-          </Button>
-          
-          <Button 
-            size="sm" 
-            variant="ghost"
-            onClick={toggleDarkMode}
-          >
-            {isDarkMode ? '☀️' : '🌙'}
-          </Button>
-          
-          <Button 
-            size="sm" 
-            variant="ghost"
-            onClick={() => window.location.href = '/'}
-          >
-            ← Back
-          </Button>
-        </div>
-      </header>
+        <Button 
+          size="sm" 
+          variant="ghost"
+          onClick={() => window.location.href = '/'}
+          className="text-gray-300 hover:text-white"
+        >
+          ← Back to IDE
+        </Button>
+      </div>
 
       {/* Main Content with Sidebar */}
       <div className="flex-1 flex overflow-hidden">
