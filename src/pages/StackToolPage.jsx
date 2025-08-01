@@ -12,6 +12,7 @@ import InstructionReference from '../components/visualizer/InstructionReference'
 import FileSelector from '../components/visualizer/FileSelector';
 import FileSidebar from '../components/FileSidebar';
 import Button from '../components/ui/Button';
+import Panel from '../components/ui/Panel';
 
 /**
  * LCC Stack Visualizer Tool Page
@@ -491,18 +492,20 @@ function StackToolPage() {
           </div>
 
           {/* Output - Middle Top */}
-          <div className="col-span-4 row-span-2 bg-gray-800 rounded-lg shadow-xl overflow-hidden">
-            <div className="h-full flex flex-col">
-              <div className="bg-gray-700 px-4 py-2 text-sm font-semibold flex justify-between">
-                <span>OUTPUT</span>
-                <button 
+          <div className="col-span-4 row-span-2">
+            <Panel 
+              title="OUTPUT" 
+              isDarkMode={isDarkMode}
+              headerActions={
+                <button
                   onClick={() => setOutput([])}
-                  className="text-xs text-gray-400 hover:text-white"
+                  className="text-xs text-gray-400 hover:text-white transition-colors px-2 py-1"
                 >
                   Clear
                 </button>
-              </div>
-              <div className="flex-1 p-4 overflow-y-auto font-mono text-sm">
+              }
+            >
+              <div className="font-mono text-sm">
                 {output.map((line, idx) => (
                   <div key={idx} className="text-green-400">
                     {line || '\u00A0'}
@@ -514,24 +517,20 @@ function StackToolPage() {
                   </div>
                 )}
               </div>
-            </div>
+            </Panel>
           </div>
 
           {/* Controls - Top Right */}
-          <div className="col-span-4 row-span-1 bg-gray-800 rounded-lg shadow-xl">
-            <div className="h-full flex flex-col">
-              <div className="bg-gray-700 px-4 py-2 text-sm font-semibold rounded-t-lg">
-                EXECUTION CONTROLS
-              </div>
-              <div className="flex-1 p-4">
-                <ExecutionControls
-                  onStep={handleStep}
-                  onReset={handleReset}
-                  isRunning={isRunning}
-                  isDarkMode={isDarkMode}
-                />
-              </div>
-            </div>
+          <div className="col-span-4 row-span-1">
+            <Panel title="EXECUTION CONTROLS" isDarkMode={isDarkMode} noPadding>
+              <ExecutionControls
+                onStep={handleStep}
+                onReset={handleReset}
+                isRunning={isRunning}
+                isDarkMode={isDarkMode}
+                compact={true}
+              />
+            </Panel>
           </div>
         </div>
       </div>
