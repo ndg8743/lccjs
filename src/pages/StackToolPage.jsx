@@ -287,29 +287,44 @@ function StackToolPage() {
   // Get correct output from worker
   const getCorrectOutput = useCallback(async () => {
     try {
-      const { runProgram, terminalOutput } = useApp.getState();
+      const { runProgram, terminalOutput, setEditorContent, setCurrentFileName } = useApp.getState();
       const initialOutputLength = terminalOutput.length;
       
-      // Set the current file content in the store
-      const { setEditorContent, setCurrentFileName } = useApp.getState();
+      // Set the current visualizer code in the store so worker can run it
       setEditorContent(code);
-      setCurrentFileName(selectedFile || 'program.a');
+      setCurrentFileName(selectedFile || 'visualizer.a');
+      
+      // Add feedback message
+      setOutput(['Running program through real LCC compiler...']);
       
       await runProgram(); // This will generate the correct output
       
       // Extract the program output from terminal
       const newOutput = terminalOutput.slice(initialOutputLength);
-      const programOutput = newOutput
-        .filter(line => !line.includes('Running program') && !line.includes('✓') && !line.includes('✗'))
-        .join('\n');
       
-      if (programOutput) {
-        const correctOutputLines = programOutput.split('\n').filter(line => line.trim() !== '');
-        setOutput(correctOutputLines);
-        return correctOutputLines;
+      // Look for actual program output (numbers, text, etc.)
+      const outputLines = [];
+      for (const line of newOutput) {
+        // Skip status messages, keep actual program output
+        if (!line.includes('Running program') && 
+            !line.includes('✓') && 
+            !line.includes('✗') && 
+            !line.includes('LCC.js') &&
+            !line.includes('===') &&
+            line.trim() !== '') {
+          outputLines.push(line);
+        }
+      }
+      
+      if (outputLines.length > 0) {
+        setOutput(outputLines);
+        return outputLines;
+      } else {
+        setOutput(['Program executed but no output was generated.']);
       }
     } catch (error) {
       console.warn('Worker execution failed:', error);
+      setOutput([`Error: ${error.message}`]);
     }
     return [];
   }, [code, selectedFile]);
@@ -622,12 +637,18 @@ function StackToolPage() {
                 </button>
               }
             >
-              <div className="font-mono text-sm">
-                {output.map((line, idx) => (
-                  <div key={idx} className="text-green-400">
-                    {line || '\u00A0'}
+              <div className="font-mono text-sm min-h-[100px]">
+                {output.length === 0 ? (
+                  <div className="text-gray-500 italic">
+                    No output yet. Run the program or click "Correct Output" to see results.
                   </div>
-                ))}
+                ) : (
+                  output.map((line, idx) => (
+                    <div key={idx} className="text-green-400">
+                      {line || '\u00A0'}
+                    </div>
+                  ))
+                )}
                 {error && (
                   <div className="text-red-400 mt-2">
                     Error: {error}

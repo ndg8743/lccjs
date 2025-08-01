@@ -21,6 +21,12 @@ function Header({ showFileSidebar, onToggleFileSidebar, showReference, onToggleR
   } = useApp();
 
   const handleRun = async () => {
+    // If not on main page, navigate there first
+    if (window.location.pathname !== '/') {
+      window.location.href = '/';
+      return;
+    }
+    
     if (isProcessing) {
       stopProgram();
     } else {
@@ -29,6 +35,12 @@ function Header({ showFileSidebar, onToggleFileSidebar, showReference, onToggleR
   };
 
   const handleLoadDemo = async () => {
+    // If not on main page, navigate there first
+    if (window.location.pathname !== '/') {
+      window.location.href = '/';
+      return;
+    }
+    
     await loadDemoFile('a1test.a');
   };
 
@@ -59,9 +71,10 @@ function Header({ showFileSidebar, onToggleFileSidebar, showReference, onToggleR
           </Button>
           
           <motion.h1 
-            className="text-xl md:text-2xl font-bold text-primary-400 flex-shrink-0"
+            className="text-xl md:text-2xl font-bold text-primary-400 flex-shrink-0 cursor-pointer"
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 300 }}
+            onClick={() => window.location.href = '/'}
           >
             LCC.js
           </motion.h1>
