@@ -161,7 +161,9 @@ function MemoryPanel({ memory = {}, previousMemory = {}, pc, sp, isDarkMode }) {
           <table className="w-full">
             <thead>
               <tr>
-                <th className="sticky top-0 bg-gray-800 z-10 text-left text-xs text-gray-400 font-normal pb-1">Addr</th>
+                <th className="sticky top-0 left-0 bg-gray-800 z-20 text-left text-xs text-gray-400 font-normal pb-1">
+                  Addr
+                </th>
                 {[...Array(16)].map((_, i) => (
                   <th key={i} className="sticky top-0 bg-gray-800 z-10 text-center text-xs text-gray-400 font-normal pb-1">
                     +{i.toString(16).toUpperCase()}
@@ -176,7 +178,7 @@ function MemoryPanel({ memory = {}, previousMemory = {}, pc, sp, isDarkMode }) {
                 
                 return (
                   <tr key={rowAddr}>
-                    <td className="text-xs text-gray-400 font-mono pr-2">
+                    <td className="sticky left-0 bg-gray-800 z-10 text-xs text-gray-400 font-mono pr-2">
                       {rowAddr.toString(16).toUpperCase().padStart(4, '0')}
                     </td>
                     {[...Array(16)].map((_, col) => {
