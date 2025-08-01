@@ -6,6 +6,7 @@ import { EditorView } from '@codemirror/view';
 import { hoverTooltip } from '@codemirror/view';
 import { StateField, StateEffect } from '@codemirror/state';
 import { useApp } from '../store/AppStore';
+import { createLccMode } from '../editor/lcc-mode';
 
 
 /**
@@ -521,39 +522,42 @@ function createTooltip(info, line) {
   }
   
   dom.innerHTML = `
-    <div class="hover-header">
-      <span class="hover-instruction-name">${info.descriptive_name}</span>
+    <div style="color: #4fc1ff; font-weight: bold; font-size: 16px; margin-bottom: 8px;">
+      ${info.descriptive_name}
     </div>
     
-    <div class="hover-section">
-      <div class="hover-value hover-syntax">${info.syntax}</div>
+    <div style="color: #dcdcaa; font-family: Consolas, monospace; margin-bottom: 6px;">
+      ${info.syntax}
     </div>
     
-    <div class="hover-section">
-      <div class="hover-value hover-formula">${info.description}</div>
+    <div style="color: #ce9178; font-style: italic; margin-bottom: 6px;">
+      ${info.description}
     </div>
     
-    <div class="hover-section">
-      <div class="hover-value hover-description">${info.explanation}</div>
+    <div style="color: #d4d4d4; margin-bottom: 8px; line-height: 1.4;">
+      ${info.explanation}
     </div>
     
-    <div class="hover-section">
-      <div class="hover-label">Binary format:</div>
-      <div class="hover-value hover-binary">${info.binary_format} ${binaryFormatted}</div>
+    <div style="margin-bottom: 6px;">
+      <span style="color: #9cdcfe; font-weight: bold;">Binary format:</span>
+      <span style="color: #d4d4d4; font-family: Consolas, monospace; margin-left: 8px;">
+        <span style="color: #c586c0;">${info.binary_format.split(' ')[0]}</span>
+        <span style="color: #dcdcaa;"> ${binaryFormatted.substring(4)}</span>
+      </span>
     </div>
     
     ${info.offset ? `
-    <div class="hover-section">
-      <div class="hover-value">${info.offset}</div>
+    <div style="color: #d4d4d4; margin-bottom: 6px;">
+      ${info.offset}
     </div>
     ` : ''}
     
     ${info.flags_set ? `
-    <div class="hover-section">
-      <div class="hover-label">Flags Affected:</div>
-      <div class="hover-value">
+    <div>
+      <span style="color: #9cdcfe; font-weight: bold;">Flags Affected:</span>
+      <span style="color: #ffd700; margin-left: 8px;">
         ${info.flags_set.toUpperCase().split('').join(', ')}
-      </div>
+      </span>
     </div>
     ` : ''}
   `;
@@ -630,11 +634,11 @@ function EditorPanel() {
   const editorRef = useRef(null);
 
   // Create LCC language mode
-  
+  const lccMode = createLccMode();
 
   // Editor extensions
   const extensions = [
-    
+    lccMode,
     lccHoverTooltip,
     EditorView.theme({
       '&': {
@@ -724,9 +728,9 @@ function EditorPanel() {
   return (
     <motion.div 
       className="flex flex-col h-full editor-panel"
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3, delay: 0.1 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.15 }}
     >
       {/* Editor header */}
       <div className="flex justify-between items-center px-4 py-2 bg-gray-800 border-b border-gray-700 flex-shrink-0">

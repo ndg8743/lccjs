@@ -16,19 +16,51 @@ import ExecutionControls from '../components/visualizer/ExecutionControls';
 function StackToolPage() {
   const { isDarkMode } = useApp();
   
+  // Error boundary
+  const [hasError, setHasError] = useState(false);
+  
+  useEffect(() => {
+    const handleError = (error) => {
+      console.error('StackToolPage error:', error);
+      setHasError(true);
+    };
+    
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+  
+  if (hasError) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
+          <button 
+            className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700"
+            onClick={() => {
+              setHasError(false);
+              window.location.reload();
+            }}
+          >
+            Reload Page
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
   // Apply dark mode to HTML element
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDarkMode);
     document.body.className = isDarkMode 
-      ? 'bg-gray-900 text-gray-100 min-h-screen'
-      : 'bg-gray-50 text-gray-900 min-h-screen';
+      ? 'bg-gray-900 text-gray-100 min-h-screen overflow-hidden'
+      : 'bg-gray-50 text-gray-900 min-h-screen overflow-hidden';
   }, [isDarkMode]);
   
   // Core state
   const [code, setCode] = useState('');
   const [currentLine, setCurrentLine] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showReference, setShowReference] = useState(false);
   const [stepCount, setStepCount] = useState(1);

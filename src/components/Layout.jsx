@@ -118,7 +118,7 @@ function Layout() {
       className="flex flex-col h-screen overflow-hidden bg-gray-900"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.1 }}
     >
       {/* Header */}
       <Header />
