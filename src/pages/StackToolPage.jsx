@@ -114,52 +114,61 @@ function StackToolPage() {
   // Handle window resize for full-screen scaling
   useEffect(() => {
     const handleResize = () => {
-      const isMobileNow = window.innerWidth < 768;
-      setIsMobile(isMobileNow);
-      
-      if (!isMobileNow) {
-        // Calculate full-screen layouts
-        const vw = window.innerWidth;
-        const vh = window.innerHeight - 48; // Subtract header height
+      try {
+        const isMobileNow = window.innerWidth < 768;
+        setIsMobile(isMobileNow);
         
-        setLayouts({
-          codeEditor: { 
-            x: vw * 0.01, 
-            y: vh * 0.01, 
-            width: vw * 0.32, 
-            height: vh * 0.52
-          },
-          console: { 
-            x: vw * 0.01, 
-            y: vh * 0.54, 
-            width: vw * 0.32, 
-            height: vh * 0.28
-          },
-          registers: { 
-            x: vw * 0.34, 
-            y: vh * 0.01, 
-            width: vw * 0.22, 
-            height: vh * 0.40
-          },
-          stack: { 
-            x: vw * 0.57, 
-            y: vh * 0.01, 
-            width: vw * 0.42, 
-            height: vh * 0.52
-          },
-          memory: { 
-            x: vw * 0.34, 
-            y: vh * 0.42, 
-            width: vw * 0.65, 
-            height: vh * 0.40
-          },
-          controls: { 
-            x: vw * 0.01, 
-            y: vh * 0.83, 
-            width: vw * 0.32, 
-            height: vh * 0.15
-          }
-        });
+        if (!isMobileNow && window.innerWidth > 320 && window.innerHeight > 200) {
+          // Calculate full-screen layouts with safe bounds
+          const vw = Math.max(800, window.innerWidth); // Minimum width
+          const vh = Math.max(600, window.innerHeight - 48); // Minimum height
+          
+          // Calculate safe percentages
+          const safeLayouts = {
+            codeEditor: { 
+              x: Math.max(0, vw * 0.01), 
+              y: Math.max(0, vh * 0.01), 
+              width: Math.min(vw * 0.9, vw * 0.32), 
+              height: Math.min(vh * 0.9, vh * 0.52)
+            },
+            console: { 
+              x: Math.max(0, vw * 0.01), 
+              y: Math.max(0, vh * 0.54), 
+              width: Math.min(vw * 0.9, vw * 0.32), 
+              height: Math.min(vh * 0.4, vh * 0.28)
+            },
+            registers: { 
+              x: Math.max(0, vw * 0.34), 
+              y: Math.max(0, vh * 0.01), 
+              width: Math.min(vw * 0.6, vw * 0.22), 
+              height: Math.min(vh * 0.8, vh * 0.40)
+            },
+            stack: { 
+              x: Math.max(0, vw * 0.57), 
+              y: Math.max(0, vh * 0.01), 
+              width: Math.min(vw * 0.4, vw * 0.42), 
+              height: Math.min(vh * 0.9, vh * 0.52)
+            },
+            memory: { 
+              x: Math.max(0, vw * 0.34), 
+              y: Math.max(0, vh * 0.42), 
+              width: Math.min(vw * 0.6, vw * 0.65), 
+              height: Math.min(vh * 0.5, vh * 0.40)
+            },
+            controls: { 
+              x: Math.max(0, vw * 0.01), 
+              y: Math.max(0, vh * 0.83), 
+              width: Math.min(vw * 0.9, vw * 0.32), 
+              height: Math.min(vh * 0.3, vh * 0.15)
+            }
+          };
+          
+          setLayouts(safeLayouts);
+        }
+      } catch (error) {
+        console.warn('Error in resize handler:', error);
+        // Fallback to mobile layout on error
+        setIsMobile(true);
       }
     };
     
@@ -694,9 +703,10 @@ function StackToolPage() {
     );
   }
 
-  // Desktop layout - FULL SCREEN
-  return (
-    <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} overflow-hidden`}>
+  // Desktop layout - FULL SCREEN with error boundary
+  try {
+    return (
+      <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} overflow-hidden`}>
       {/* Header */}
       <div className={`h-12 px-4 flex items-center justify-between flex-shrink-0 ${
         isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-300'
@@ -903,7 +913,38 @@ function StackToolPage() {
         )}
       </AnimatePresence>
     </div>
-  );
+    );
+  } catch (error) {
+    console.error('StackToolPage render error:', error);
+    // Fallback to mobile layout on render error
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <i className="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-4"></i>
+          <h1 className="text-2xl font-bold mb-4">Visualization Error</h1>
+          <p className="text-gray-300 mb-6">
+            The visualizer encountered an error. This may be due to window size or browser compatibility.
+          </p>
+          <div className="space-y-2">
+            <button 
+              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+              onClick={() => window.location.reload()}
+            >
+              <i className="fas fa-refresh mr-2"></i>
+              Reload Page
+            </button>
+            <button 
+              className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded transition-colors"
+              onClick={() => window.location.href = '/'}
+            >
+              <i className="fas fa-arrow-left mr-2"></i>
+              Back to IDE
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 }
 
 export default StackToolPage;

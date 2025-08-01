@@ -1,7 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { EditorView } from '@codemirror/view';
+import { EditorView, Decoration, DecorationSet } from '@codemirror/view';
+import { StateField, StateEffect } from '@codemirror/state';
 // import { createLccMode } from '../../editor/lcc-mode';
 
 /**
@@ -43,25 +44,17 @@ function CodeEditor({ code, setCode, currentLine, error, isDarkMode }) {
   useEffect(() => {
     if (editorRef.current && currentLine >= 0) {
       const view = editorRef.current.view;
-      if (view) {
-        // Clear previous highlights
-        view.dispatch({
-          effects: EditorView.decorations.update.of((decorations) => {
-            return decorations.filter(() => false);
-          })
-        });
-        
-        // Add current line highlight
-        const line = view.state.doc.line(currentLine + 1);
-        if (line) {
-          const decoration = EditorView.decoration.line({
-            attributes: { class: 'cm-currentLine' }
-          });
-          view.dispatch({
-            effects: EditorView.decorations.update.of((decorations) => {
-              return decorations.update([decoration.range(line.from)]);
-            })
-          });
+      if (view && view.state) {
+        try {
+          // Simple approach - just scroll to the line and use CSS styling
+          const line = view.state.doc.line(currentLine + 1);
+          if (line) {
+            view.dispatch({
+              effects: EditorView.scrollIntoView(line.from, { y: 'center' })
+            });
+          }
+        } catch (error) {
+          console.warn('Error highlighting line:', error);
         }
       }
     }
