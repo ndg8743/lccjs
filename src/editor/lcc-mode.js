@@ -1,84 +1,122 @@
-import { LanguageSupport } from '@codemirror/language';
-import { StreamLanguage } from '@codemirror/language';
-
 /**
- * LCC Assembly language mode for CodeMirror
+ * CodeMirror language mode for LCC assembly
  * Provides syntax highlighting for LCC assembly language
  */
-const lccLanguage = StreamLanguage.define({
+
+import { StreamLanguage } from '@codemirror/language';
+
+const lccMode = {
   name: 'lcc',
   
-  token(stream, state) {
-    // Skip whitespace
-    if (stream.eatSpace()) {
-      return null;
-    }
-
-    // Comments
-    if (stream.match(/^;.*$/)) {
+  startState: function() {
+    return {
+      inComment: false,
+      inString: false
+    };
+  },
+  
+  token: function(stream, state) {
+    // Handle comments
+    if (!state.inString && stream.match(';')) {
+      stream.skipToEnd();
       return 'comment';
     }
-
-    // Labels (words followed by colon)
+    
+    // Handle strings
+    if (!state.inComment) {
+      if (stream.match('"')) {
+        state.inString = !state.inString;
+        return 'string';
+      }
+      if (state.inString) {
+        stream.next();
+        return 'string';
+      }
+    }
+    
+    // Skip whitespace
+    if (stream.eatSpace()) return null;
+    
+    // Handle labels
     if (stream.match(/^[a-zA-Z_][a-zA-Z0-9_]*:/)) {
-      return 'labelName';
+      return 'variable-2';
     }
-
-    // Directives (starting with dot)
-    if (stream.match(/^\.(word|fill|string|stringz|str|blkw|ascii|asciiz|byte|data|text|global|extern|export|import|include|org|equ|set|align|space|section)\b/i)) {
-      return 'meta';
-    }
-
-    // Instructions - purple in VSCode
-    if (stream.match(/^(add|sub|mul|div|rem|and|or|xor|not|mov|ld|st|lea|ldr|str|push|pop|br|brz|brn|brp|brlt|brgt|brc|bral|jmp|jsr|ret|bl|blr|cmp|srl|sra|sll|rol|ror|mvr|sext|mvi|halt|nl|dout|udout|hout|aout|sout|din|hin|ain|sin|clear|sleep|nbain|cursor|srand|rand|millis|resetc|m|r|s|bp)\b/i)) {
+    
+    // Handle directives
+    if (stream.match(/^\.[a-zA-Z]+/)) {
       return 'keyword';
     }
-
-    // Registers - cyan in VSCode
-    if (stream.match(/^r[0-7]\b|^(sp|fp|lr)\b/i)) {
-      return 'atom';
+    
+    // Handle registers
+    if (stream.match(/^[rR][0-7]\b/)) {
+      return 'variable-3';
     }
-
-    // Numbers (decimal, hex, binary)
-    if (stream.match(/^#?-?0x[0-9a-f]+\b/i)) {
+    
+    // Handle special registers
+    if (stream.match(/^(sp|fp|lr|pc)\b/i)) {
+      return 'variable-3';
+    }
+    
+    // Handle hex numbers
+    if (stream.match(/^0[xX][0-9a-fA-F]+/)) {
       return 'number';
     }
-    if (stream.match(/^#?-?0b[01]+\b/i)) {
+    
+    // Handle binary numbers
+    if (stream.match(/^0[bB][01]+/)) {
       return 'number';
     }
-    if (stream.match(/^#?-?\d+\b/)) {
+    
+    // Handle decimal numbers
+    if (stream.match(/^-?\d+/)) {
       return 'number';
     }
-
-    // Strings
-    if (stream.match(/^"([^"\\]|\\.)*"/)) {
-      return 'string';
-    }
-
-    // Identifiers (labels, symbols)
-    if (stream.match(/^[a-zA-Z_][a-zA-Z0-9_]*/)) {
-      return 'variableName';
-    }
-
-    // Operators and punctuation
-    if (stream.match(/^[+\-*/%=<>!&|^~()[\]{},.]/)) {
-      return 'operator';
-    }
-
-    // Skip unknown characters
+    
+    // Handle instructions
+    const instructions = [
+      // Branch
+      'br', 'bral', 'brz', 'bre', 'brnz', 'brne', 'brn', 'brp', 
+      'brlt', 'brgt', 'brc', 'brb',
+      // Arithmetic
+      'add', 'sub', 'mul', 'div', 'rem',
+      // Logical
+      'and', 'or', 'xor', 'not',
+      // Memory
+      'ld', 'st', 'ldr', 'str', 'lea',
+      // Control
+      'jmp', 'bl', 'jsr', 'blr', 'jsrr', 'ret',
+      // Stack
+      'push', 'pop',
+      // Compare
+      'cmp',
+      // Move
+      'mov', 'mvi', 'mvr',
+      // Shift/Rotate
+      'sll', 'srl', 'sra', 'rol', 'ror',
+      // I/O
+      'halt', 'nl', 'dout', 'udout', 'hout', 'aout', 'sout',
+      'din', 'hin', 'ain', 'sin',
+      // Debug
+      'm', 'r', 's', 'bp'
+    ];
+    
+    const word = stream.current();
     stream.next();
-    return null;
+    
+    // Check if word is an instruction
+    for (const inst of instructions) {
+      if (word.toLowerCase() === inst) {
+        return 'builtin';
+      }
+    }
+    
+    // Default to variable
+    return 'variable';
   },
+  
+  lineComment: ';'
+};
 
-  startState() {
-    return {};
-  },
-});
-
-/**
- * Creates the LCC language support extension
- * @returns {LanguageSupport} The language support extension
- */
 export function createLccMode() {
-  return new LanguageSupport(lccLanguage);
+  return StreamLanguage.define(lccMode);
 }

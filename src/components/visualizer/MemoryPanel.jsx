@@ -2,20 +2,22 @@ import React, { useState, useEffect, useRef } from 'react';
 
 /**
  * Memory panel component with change highlighting
+ * Now supports object-based memory format from LCC bridge
  */
-function MemoryPanel({ memory, previousMemory = [], pc, sp, isDarkMode, draggable = false }) {
+function MemoryPanel({ memory = {}, previousMemory = {}, pc, sp, isDarkMode }) {
   const [displayMode, setDisplayMode] = useState('hex'); // 'hex', 'decimal', or 'ascii'
   const [baseAddress, setBaseAddress] = useState(0x3000);
   const scrollRef = useRef(null);
   const ROWS_TO_SHOW = 16;
 
+  // Convert memory object to array for display
+  const memoryAddresses = Object.keys(memory).map(addr => parseInt(addr)).sort((a, b) => a - b);
+  
   // Track changed memory addresses
   const changedAddresses = new Set();
-  if (previousMemory.length === memory.length) {
-    for (let i = 0; i < memory.length; i++) {
-      if (memory[i] !== previousMemory[i]) {
-        changedAddresses.add(i);
-      }
+  for (const addr in memory) {
+    if (previousMemory[addr] !== memory[addr]) {
+      changedAddresses.add(parseInt(addr));
     }
   }
 
@@ -28,30 +30,53 @@ function MemoryPanel({ memory, previousMemory = [], pc, sp, isDarkMode, draggabl
   }, [pc]);
 
   const formatValue = (value, mode) => {
+    if (value === undefined) return '....';
+    
     if (mode === 'hex') {
       return value.toString(16).toUpperCase().padStart(4, '0');
     } else if (mode === 'decimal') {
-      return value.toString().padStart(5, ' ');
+      // Show as signed 16-bit
+      const signed = (value & 0x8000) ? value - 0x10000 : value;
+      return signed.toString().padStart(5, ' ');
     } else if (mode === 'ascii') {
-      if (value >= 32 && value <= 126) {
-        return String.fromCharCode(value).padEnd(2, ' ');
-      }
-      return '..';
+      const high = (value >> 8) & 0xFF;
+      const low = value & 0xFF;
+      let result = '';
+      result += (high >= 32 && high <= 126) ? String.fromCharCode(high) : '.';
+      result += (low >= 32 && low <= 126) ? String.fromCharCode(low) : '.';
+      return result;
     }
   };
 
   const handleAddressChange = (e) => {
     const value = parseInt(e.target.value, 16);
-    if (!isNaN(value) && value >= 0 && value < memory.length) {
+    if (!isNaN(value) && value >= 0 && value < 0x10000) {
       setBaseAddress(value & 0xFFF0); // Align to 16
     }
   };
 
-  const renderMemoryCell = (address, value) => {
+  const renderMemoryCell = (address) => {
+    const value = memory[address];
     const hasChanged = changedAddresses.has(address);
     const isProgramCounter = address === pc;
     const isStackPointer = address === sp;
     const previousValue = previousMemory[address];
+    
+    // If no value at this address, show empty cell
+    if (value === undefined) {
+      return (
+        <div
+          key={address}
+          className={`px-1 py-0.5 text-center font-mono text-xs transition-all ${
+            isProgramCounter ? 'bg-red-900/50 ring-1 ring-red-500' :
+            isStackPointer ? 'bg-blue-900/50 ring-1 ring-blue-500' :
+            'text-gray-600'
+          }`}
+        >
+          {formatValue(undefined, displayMode)}
+        </div>
+      );
+    }
     
     return (
       <div
@@ -68,7 +93,7 @@ function MemoryPanel({ memory, previousMemory = [], pc, sp, isDarkMode, draggabl
             {formatValue(previousValue, displayMode)}
           </div>
         )}
-        <div className={hasChanged ? 'text-green-400 underline' : ''}>
+        <div className={hasChanged ? 'text-green-400' : ''}>
           {formatValue(value, displayMode)}
         </div>
       </div>
@@ -76,12 +101,8 @@ function MemoryPanel({ memory, previousMemory = [], pc, sp, isDarkMode, draggabl
   };
 
   return (
-    <div className={`h-full bg-gray-800 rounded-lg overflow-hidden ${
-      draggable ? '' : 'shadow-lg'
-    }`}>
-      <div className={`bg-gray-700 px-4 py-2 text-sm font-semibold ${
-        draggable ? 'cursor-move' : ''
-      }`}>
+    <div className="h-full flex flex-col">
+      <div className="bg-gray-700 px-4 py-2 text-sm font-semibold">
         <div className="flex justify-between items-center">
           <span>MEMORY</span>
           <div className="flex items-center space-x-2">
@@ -91,7 +112,7 @@ function MemoryPanel({ memory, previousMemory = [], pc, sp, isDarkMode, draggabl
                 onClick={() => setDisplayMode('hex')}
                 className={`px-2 py-1 rounded text-xs ${
                   displayMode === 'hex' 
-                    ? 'bg-primary-600 text-white' 
+                    ? 'bg-blue-600 text-white' 
                     : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
                 }`}
               >
@@ -101,7 +122,7 @@ function MemoryPanel({ memory, previousMemory = [], pc, sp, isDarkMode, draggabl
                 onClick={() => setDisplayMode('decimal')}
                 className={`px-2 py-1 rounded text-xs ${
                   displayMode === 'decimal' 
-                    ? 'bg-primary-600 text-white' 
+                    ? 'bg-blue-600 text-white' 
                     : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
                 }`}
               >
@@ -111,7 +132,7 @@ function MemoryPanel({ memory, previousMemory = [], pc, sp, isDarkMode, draggabl
                 onClick={() => setDisplayMode('ascii')}
                 className={`px-2 py-1 rounded text-xs ${
                   displayMode === 'ascii' 
-                    ? 'bg-primary-600 text-white' 
+                    ? 'bg-blue-600 text-white' 
                     : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
                 }`}
               >
@@ -124,7 +145,7 @@ function MemoryPanel({ memory, previousMemory = [], pc, sp, isDarkMode, draggabl
               <span className="text-xs text-gray-400">Addr:</span>
               <input
                 type="text"
-                value={baseAddress.toString(16).toUpperCase()}
+                value={baseAddress.toString(16).toUpperCase().padStart(4, '0')}
                 onChange={handleAddressChange}
                 className="w-16 px-1 py-0.5 text-xs bg-gray-600 rounded text-white font-mono"
                 placeholder="0000"
@@ -134,7 +155,7 @@ function MemoryPanel({ memory, previousMemory = [], pc, sp, isDarkMode, draggabl
         </div>
       </div>
 
-      <div className="p-2 h-[calc(100%-3rem)] overflow-hidden">
+      <div className="flex-1 p-2 overflow-hidden">
         <div ref={scrollRef} className="h-full overflow-y-auto">
           {/* Memory Grid */}
           <table className="w-full">
@@ -151,7 +172,7 @@ function MemoryPanel({ memory, previousMemory = [], pc, sp, isDarkMode, draggabl
             <tbody>
               {[...Array(ROWS_TO_SHOW)].map((_, row) => {
                 const rowAddr = baseAddress + row * 16;
-                if (rowAddr >= memory.length) return null;
+                if (rowAddr >= 0x10000) return null;
                 
                 return (
                   <tr key={rowAddr}>
@@ -160,11 +181,11 @@ function MemoryPanel({ memory, previousMemory = [], pc, sp, isDarkMode, draggabl
                     </td>
                     {[...Array(16)].map((_, col) => {
                       const addr = rowAddr + col;
-                      if (addr >= memory.length) return <td key={col}></td>;
+                      if (addr >= 0x10000) return <td key={col}></td>;
                       
                       return (
                         <td key={col}>
-                          {renderMemoryCell(addr, memory[addr])}
+                          {renderMemoryCell(addr)}
                         </td>
                       );
                     })}
@@ -174,25 +195,25 @@ function MemoryPanel({ memory, previousMemory = [], pc, sp, isDarkMode, draggabl
             </tbody>
           </table>
 
-          {/* Legend */}
+          {/* Memory Stats */}
           <div className="mt-4 pt-2 border-t border-gray-700 text-xs text-gray-400">
+            <div className="mb-2">
+              Memory Usage: {memoryAddresses.length} locations
+            </div>
+            
+            {/* Legend */}
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center">
                 <div className="w-4 h-4 bg-red-900/50 ring-1 ring-red-500 rounded mr-1"></div>
-                <span>PC (Program Counter)</span>
+                <span>PC</span>
               </div>
               <div className="flex items-center">
                 <div className="w-4 h-4 bg-blue-900/50 ring-1 ring-blue-500 rounded mr-1"></div>
-                <span>SP (Stack Pointer)</span>
+                <span>SP</span>
               </div>
               <div className="flex items-center">
                 <div className="w-4 h-4 bg-yellow-900/30 rounded mr-1"></div>
                 <span>Changed</span>
-              </div>
-              <div className="flex items-center">
-                <span className="text-red-500 line-through mr-1">old</span>
-                <span>→</span>
-                <span className="text-green-400 underline ml-1">new</span>
               </div>
             </div>
           </div>

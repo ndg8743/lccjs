@@ -44,6 +44,11 @@ class Interpreter {
     this.generateStats = false;        // Whether to generate .lst and .bst files
     this.headerLines = [];
     this.instructionsCap = 500000;     // Limit the number of instructions to prevent infinite loops
+    
+    // Visualizer support
+    this.stepMode = false;             // Enable step-by-step execution
+    this.stateCallback = null;         // Callback for state changes
+    this.outputCallback = null;        // Callback for output
   }
 
   main(args) {
