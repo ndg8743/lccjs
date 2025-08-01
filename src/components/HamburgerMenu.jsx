@@ -19,7 +19,9 @@ function HamburgerMenu() {
     addTerminalOutput,
     openFiles,
     downloadFile,
-    downloadAllFiles
+    downloadAllFiles,
+    isDarkMode,
+    toggleDarkMode
   } = useApp();
 
   const handleRun = async () => {
@@ -92,6 +94,14 @@ function HamburgerMenu() {
         onClick: () => window.location.href = '/resources',
       },
     { type: 'divider' },
+    {
+      label: `${isDarkMode ? 'Light' : 'Dark'} Mode`,
+      icon: isDarkMode ? 'fas fa-sun' : 'fas fa-moon',
+      onClick: () => {
+        toggleDarkMode();
+        toggleHamburgerMenu();
+      },
+    },
     {
       label: 'Options',
       icon: 'fas fa-cog',

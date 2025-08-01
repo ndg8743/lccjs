@@ -508,22 +508,25 @@ class LCCSimulator {
 
   executeTRAP(dr, trapvec) {
     switch (trapvec) {
-      case 0x25: // HALT
+      case 0: // HALT
         this.running = false;
         break;
-      case 0x01: // DOUT - decimal output
+      case 1: // NL - newline
+        this.output += '\n';
+        break;
+      case 2: // DOUT - decimal output
         this.output += this.toSigned16(this.r[dr]) + '\n';
         break;
-      case 0x02: // UDOUT - unsigned decimal output
+      case 3: // UDOUT - unsigned decimal output
         this.output += this.r[dr] + '\n';
         break;
-      case 0x03: // HOUT - hex output
+      case 4: // HOUT - hex output
         this.output += this.r[dr].toString(16).toUpperCase() + '\n';
         break;
-      case 0x04: // AOUT - ASCII output
+      case 5: // AOUT - ASCII output
         this.output += String.fromCharCode(this.r[dr] & 0xFF);
         break;
-      case 0x05: // SOUT - string output
+      case 6: // SOUT - string output
         let addr = this.r[dr];
         while (this.mem[addr] !== 0) {
           this.output += String.fromCharCode(this.mem[addr] & 0xFF);
@@ -531,19 +534,24 @@ class LCCSimulator {
           addr = (addr + 1) & 0xFFFF;
         }
         break;
-      case 0x06: // NL - newline
-        this.output += '\n';
-        break;
-      case 0x08: // DIN - decimal input
-      case 0x09: // HIN - hex input
-      case 0x0A: // AIN - ASCII input
-      case 0x0B: // SIN - string input
+      case 7: // DIN - decimal input
+      case 8: // HIN - hex input
+      case 9: // AIN - ASCII input
+      case 10: // SIN - string input
         // For visualization, these would need to be handled differently
         // For now, we'll just set a default value
         this.r[dr] = 0;
         break;
+      case 11: // m - memory dump (not implemented in visualizer)
+      case 12: // r - register dump (not implemented in visualizer)
+      case 13: // s - stack dump (not implemented in visualizer)
+      case 14: // bp - breakpoint (not implemented in visualizer)
+        // These are debug commands, ignore in visualizer
+        break;
       default:
-        throw new Error(`Unknown trap vector: ${trapvec}`);
+        console.warn(`Unknown trap vector: ${trapvec}`);
+        // Don't throw error, just warn and continue
+        break;
     }
   }
 

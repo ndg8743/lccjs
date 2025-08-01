@@ -125,7 +125,7 @@ function StackToolPage() {
 
   // Handle file selection
   const handleFileSelect = (fileName) => {
-    const { fileTree } = useApp.getState();
+    const { fileTree } = useApp();
     const fileContent = fileTree[fileName];
     if (fileContent) {
       setCode(fileContent);
@@ -180,7 +180,14 @@ function StackToolPage() {
     setFlags(state.flags || { n: false, z: false, c: false, v: false });
     setMemory(state.memory || {});
     setStack(state.stack || []);
-    setOutput(state.output ? state.output.split('\n') : []);
+    
+    // Handle output properly - split by newlines and filter empty lines
+    if (state.output) {
+      const outputLines = state.output.split('\n').filter(line => line.trim() !== '');
+      setOutput(outputLines);
+    } else {
+      setOutput([]);
+    }
   }, []);
 
   // Execute single step
@@ -414,27 +421,30 @@ function StackToolPage() {
         </div>
       </header>
 
-      {/* File Sidebar */}
-      <FileSidebar
-        isDarkMode={isDarkMode}
-        isOpen={showFileSidebar}
-        onToggle={() => setShowFileSidebar(!showFileSidebar)}
-        onFileSelect={handleFileSelect}
-      />
+      {/* Main Content with Sidebar */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* File Sidebar - Always visible */}
+        <motion.div 
+          className="w-80 border-r border-gray-700 bg-gray-800 flex-shrink-0"
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ width: showFileSidebar ? 320 : 0, opacity: showFileSidebar ? 1 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          {showFileSidebar && (
+            <FileSidebar
+              isDarkMode={isDarkMode}
+              isOpen={true}
+              onToggle={() => setShowFileSidebar(false)}
+              onFileSelect={handleFileSelect}
+            />
+          )}
+        </motion.div>
 
-      {/* Instruction Reference */}
-      <AnimatePresence>
-        {showReference && (
-          <InstructionReference
-            onClose={() => setShowReference(false)}
-            isDarkMode={isDarkMode}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Main Content - CSS Grid Layout */}
-      <div className="flex-1 p-4 overflow-hidden">
-        <div className="h-full grid grid-cols-12 grid-rows-6 gap-4">
+        {/* Main Visualizer Content */}
+        <div className="flex-1 overflow-hidden">
+          {/* Main Content - CSS Grid Layout */}
+          <div className="h-full p-4 overflow-hidden">
+            <div className="h-full grid grid-cols-12 grid-rows-6 gap-4">
           {/* Code Editor - Left Side */}
           <div className="col-span-4 row-span-4 bg-gray-800 rounded-lg shadow-xl overflow-hidden">
             <div className="h-full flex flex-col">
@@ -532,8 +542,20 @@ function StackToolPage() {
               />
             </Panel>
           </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Instruction Reference */}
+      <AnimatePresence>
+        {showReference && (
+          <InstructionReference
+            onClose={() => setShowReference(false)}
+            isDarkMode={isDarkMode}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
