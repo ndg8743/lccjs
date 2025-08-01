@@ -407,7 +407,7 @@ function StackToolPage() {
       <div className="flex-1 p-4 overflow-hidden">
         <div className="h-full grid grid-cols-12 grid-rows-6 gap-4">
           {/* Code Editor - Left Side */}
-          <div className="col-span-4 row-span-6 bg-gray-800 rounded-lg shadow-xl overflow-hidden">
+          <div className="col-span-4 row-span-4 bg-gray-800 rounded-lg shadow-xl overflow-hidden">
             <div className="h-full flex flex-col">
               <div className="bg-gray-700 px-4 py-2 text-sm font-semibold">
                 ASSEMBLY CODE
@@ -424,8 +424,46 @@ function StackToolPage() {
             </div>
           </div>
 
+          {/* Stack Visualizer - Middle Bottom */}
+          <div className="col-span-4 row-span-5 bg-gray-800 rounded-lg overflow-hidden shadow-xl">
+            <div className="h-full flex flex-col">
+              <div className="bg-gray-700 px-4 py-2 text-sm font-semibold">
+                STACK VISUALIZATION
+              </div>
+              <div className="flex-1 p-4 overflow-hidden">
+                <StackVisualizer
+                  stack={stack}
+                  previousStack={previousStack}
+                  sp={registers.sp}
+                  fp={registers.fp}
+                  isDarkMode={isDarkMode}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Registers - Middle Right */}
+          <div className="col-span-4 row-span-3 bg-gray-800 rounded-lg shadow-xl">
+            <RegisterPanel
+              registers={{ ...registers, ...flags }}
+              previousRegisters={{ ...previousRegisters }}
+              isDarkMode={isDarkMode}
+            />
+          </div>
+
+          {/* Memory - Bottom Right */}
+          <div className="col-span-4 row-span-3 bg-gray-800 rounded-lg shadow-xl">
+            <MemoryPanel
+              memory={memory}
+              previousMemory={previousMemory}
+              pc={registers.pc}
+              sp={registers.sp}
+              isDarkMode={isDarkMode}
+            />
+          </div>
+
           {/* Output - Middle Top */}
-          <div className="col-span-4 row-span-1 bg-gray-800 rounded-lg shadow-xl overflow-hidden">
+          <div className="col-span-4 row-span-2 bg-gray-800 rounded-lg shadow-xl overflow-hidden">
             <div className="h-full flex flex-col">
               <div className="bg-gray-700 px-4 py-2 text-sm font-semibold flex justify-between">
                 <span>OUTPUT</span>
@@ -466,44 +504,6 @@ function StackToolPage() {
                 />
               </div>
             </div>
-          </div>
-
-          {/* Stack Visualizer - Middle Bottom */}
-          <div className="col-span-4 row-span-5 bg-gray-800 rounded-lg overflow-hidden shadow-xl">
-            <div className="h-full flex flex-col">
-              <div className="bg-gray-700 px-4 py-2 text-sm font-semibold">
-                STACK VISUALIZATION
-              </div>
-              <div className="flex-1 p-4 overflow-hidden">
-                <StackVisualizer
-                  stack={stack}
-                  previousStack={previousStack}
-                  sp={registers.sp}
-                  fp={registers.fp}
-                  isDarkMode={isDarkMode}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Registers - Middle Right */}
-          <div className="col-span-4 row-span-2 bg-gray-800 rounded-lg shadow-xl">
-            <RegisterPanel
-              registers={{ ...registers, ...flags }}
-              previousRegisters={{ ...previousRegisters }}
-              isDarkMode={isDarkMode}
-            />
-          </div>
-
-          {/* Memory - Bottom Right */}
-          <div className="col-span-4 row-span-3 bg-gray-800 rounded-lg shadow-xl">
-            <MemoryPanel
-              memory={memory}
-              previousMemory={previousMemory}
-              pc={registers.pc}
-              sp={registers.sp}
-              isDarkMode={isDarkMode}
-            />
           </div>
         </div>
       </div>
