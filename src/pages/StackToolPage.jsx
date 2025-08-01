@@ -10,6 +10,7 @@ import CodeEditor from '../components/visualizer/CodeEditor';
 import ExecutionControls from '../components/visualizer/ExecutionControls';
 import InstructionReference from '../components/visualizer/InstructionReference';
 import FileSelector from '../components/visualizer/FileSelector';
+import FileSidebar from '../components/FileSidebar';
 import Button from '../components/ui/Button';
 
 /**
@@ -24,6 +25,7 @@ function StackToolPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [showFileSelector, setShowFileSelector] = useState(false);
   const [selectedFile, setSelectedFile] = useState('a1test.a');
+  const [showFileSidebar, setShowFileSidebar] = useState(false);
   
   // LCC Components
   const assemblerRef = useRef(null);
@@ -380,7 +382,7 @@ function StackToolPage() {
           <Button 
             size="sm" 
             variant="ghost"
-            onClick={() => setShowFileSelector(!showFileSelector)}
+            onClick={() => setShowFileSidebar(!showFileSidebar)}
           >
             📁 Files
           </Button>
@@ -411,16 +413,13 @@ function StackToolPage() {
         </div>
       </header>
 
-      {/* File Selector */}
-      <AnimatePresence>
-        {showFileSelector && (
-          <FileSelector
-            onSelect={handleFileSelect}
-            onClose={() => setShowFileSelector(false)}
-            isDarkMode={isDarkMode}
-          />
-        )}
-      </AnimatePresence>
+      {/* File Sidebar */}
+      <FileSidebar
+        isDarkMode={isDarkMode}
+        isOpen={showFileSidebar}
+        onToggle={() => setShowFileSidebar(!showFileSidebar)}
+        onFileSelect={handleFileSelect}
+      />
 
       {/* Instruction Reference */}
       <AnimatePresence>
