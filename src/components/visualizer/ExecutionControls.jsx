@@ -19,7 +19,7 @@ function ExecutionControls({ onStep, onReset, isRunning, isDarkMode }) {
 
   return (
     <motion.div 
-      className={`mt-4 rounded-lg shadow-lg p-4 ${
+      className={`mt-4 rounded-lg p-4 ${
         isDarkMode ? 'bg-gray-800' : 'bg-white'
       }`}
       initial={{ opacity: 0, y: 20 }}
