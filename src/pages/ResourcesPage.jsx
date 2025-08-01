@@ -1,17 +1,18 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useApp } from '../store/AppStore';
+import Button from '../components/ui/Button';
 
 /**
  * Resources page component displaying useful LCC learning materials
  */
 function ResourcesPage() {
-  const { isDarkMode } = useApp();
+  const { isDarkMode, toggleDarkMode } = useApp();
 
-  // Apply dark mode to HTML element
+  // Set dark mode on mount
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDarkMode);
-    document.body.className = isDarkMode 
+    document.body.className = isDarkMode
       ? 'bg-gray-900 text-gray-100 min-h-screen'
       : 'bg-gray-50 text-gray-900 min-h-screen';
   }, [isDarkMode]);
@@ -212,23 +213,31 @@ function ResourcesPage() {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Back to IDE Button */}
+      {/* Header */}
       <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b`}>
-        <div className="container mx-auto px-4 py-3">
-          <a
-            href="/"
-            className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm transition-colors ${
-              isDarkMode 
-                ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <i className="fas fa-arrow-left mr-2"></i>
-            Back to IDE
-          </a>
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => window.location.href = '/'}
+              className={`px-3 py-2 rounded-md transition-colors ${
+                isDarkMode
+                  ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+              }`}
+            >
+              <i className="fas fa-arrow-left mr-2"></i>
+              Back to IDE
+            </button>
+            <Button
+              variant="secondary"
+              onClick={toggleDarkMode}
+              icon={isDarkMode ? "fas fa-sun" : "fas fa-moon"}
+            />
+          </div>
         </div>
       </div>
-      
+
+      {/* Main Content */}
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <motion.div
@@ -355,28 +364,6 @@ function ResourcesPage() {
             <li>Explore the Stanford CS Library for deeper understanding of memory management</li>
             <li>Visit OSDev Wiki for advanced system programming concepts</li>
           </ol>
-        </motion.div>
-
-        {/* Back to IDE Button */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="mt-8 text-center"
-        >
-          <motion.a
-            href="/"
-            className={`inline-flex items-center px-6 py-3 rounded-lg font-medium transition-colors ${
-              isDarkMode
-                ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-            }`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <i className="fas fa-arrow-left mr-2"></i>
-            Back to IDE
-          </motion.a>
         </motion.div>
       </div>
     </div>

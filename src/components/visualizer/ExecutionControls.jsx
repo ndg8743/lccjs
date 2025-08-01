@@ -4,16 +4,16 @@ import { motion } from 'framer-motion';
 /**
  * Execution control panel with step controls
  */
-function ExecutionControls({ onStep, onReset, isRunning, stepCount, setStepCount, isDarkMode }) {
+function ExecutionControls({ onStep, onReset, isRunning, isDarkMode }) {
   const handleStep = (direction) => {
-    onStep(direction * stepCount);
+    onStep(direction);
   };
 
   const handleRunStop = () => {
     if (isRunning) {
-      onStep('stop'); // Stop execution
+      onStep('stop');
     } else {
-      onStep('run'); // Start execution
+      onStep('run');
     }
   };
 
@@ -92,23 +92,6 @@ function ExecutionControls({ onStep, onReset, isRunning, stepCount, setStepCount
             <i className="fas fa-redo mr-2"></i>
             Reset
           </motion.button>
-        </div>
-
-        {/* Step Count Control */}
-        <div className="flex items-center space-x-2">
-          <label className="text-sm text-gray-500">Steps:</label>
-          <input
-            type="number"
-            min="1"
-            max="100"
-            value={stepCount}
-            onChange={(e) => setStepCount(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
-            className={`w-16 px-2 py-1 text-sm rounded border ${
-              isDarkMode 
-                ? 'bg-gray-700 border-gray-600 text-white' 
-                : 'bg-white border-gray-300 text-gray-900'
-            }`}
-          />
         </div>
       </div>
     </motion.div>

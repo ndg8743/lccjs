@@ -1,3 +1,133 @@
+# LCC.js IDE
+
+A modern, web-based Integrated Development Environment for the LCC (Little Computer) assembly language. Built with React, CodeMirror 6, and Web Workers for optimal performance and user experience.
+
+## 🚀 Features
+
+### Core IDE Features
+- **Real-time Code Editor**: Syntax highlighting for LCC assembly with CodeMirror 6
+- **File Management**: Upload, download, rename, and organize assembly files
+- **Program Execution**: Run LCC assembly programs with real-time output
+- **Terminal Integration**: Interactive terminal for program input/output
+- **Dark/Light Theme**: Toggle between themes for comfortable coding
+
+### Advanced Features
+- **LCC Stack Visualizer**: Step-through execution with real-time visualization
+- **Register Panel**: Monitor all LCC registers and flags during execution
+- **Memory Panel**: View and inspect memory contents in hex/decimal/ASCII
+- **Instruction Reference**: Built-in documentation for all LCC instructions
+- **File Selector**: Easy switching between multiple assembly files
+
+### Developer Experience
+- **Responsive Design**: Works on desktop, tablet, and mobile devices
+- **Error Handling**: Comprehensive error boundaries and user-friendly messages
+- **Performance**: Web Workers for non-blocking program execution
+- **Accessibility**: Keyboard navigation and screen reader support
+
+## 🛠️ Technology Stack
+
+- **Frontend**: React 18, Framer Motion, Tailwind CSS
+- **Code Editor**: CodeMirror 6 with custom LCC language mode
+- **State Management**: Zustand for global state
+- **Build Tool**: Webpack 5 with hot reloading
+- **Backend**: Express.js server for file serving and API endpoints
+- **Assembly Engine**: Custom LCC assembler and interpreter in Web Workers
+
+## 📁 Project Structure
+
+```
+src/
+├── components/           # React components
+│   ├── ui/              # Reusable UI components
+│   ├── visualizer/      # Stack visualizer components
+│   └── ...              # Main app components
+├── store/               # Zustand state management
+├── editor/              # CodeMirror extensions and modes
+├── core/                # LCC assembler and interpreter
+├── utils/               # Utility functions
+└── pages/               # Page components
+```
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 16+ 
+- npm or yarn
+
+### Installation
+```bash
+# Clone the repository
+git clone <repository-url>
+cd lccjs-1
+
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+```
+
+### Build for Production
+```bash
+npm run build
+```
+
+## 📖 Usage
+
+### Basic Workflow
+1. **Write Code**: Use the main editor to write LCC assembly code
+2. **Save Files**: Upload or create files in the file explorer
+3. **Run Programs**: Click "Run" to execute your assembly code
+4. **View Output**: Check the terminal for program output
+5. **Visualize**: Use the Stack Visualizer for step-through debugging
+
+### File Management
+- **Upload**: Drag and drop files or use the upload button
+- **Download**: Download individual files or entire project bundles
+- **Rename**: Right-click files to rename them
+- **Delete**: Remove files from the project
+
+### Visualizer Features
+- **Step Through**: Execute code line by line
+- **File Selection**: Switch between different assembly files
+- **Real-time Updates**: See registers, memory, and stack change in real-time
+- **Responsive Layout**: Panels automatically resize for different screen sizes
+
+## 🔧 Configuration
+
+### Environment Variables
+```bash
+# Development server port
+PORT=3000
+
+# Build output directory
+DIST_DIR=dist
+```
+
+### Webpack Configuration
+The project uses Webpack 5 with multiple entry points:
+- `app.js` - Main IDE application
+- `visualizer.js` - Stack visualizer page
+- `resources.js` - Resources page
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**"Cannot read properties of null (reading 'postMessage')"**
+- Solution: The worker initialization has been fixed. Programs should now run correctly.
+
+**Visualizer goes blank on zoom/resize**
+- Solution: Added error boundaries and responsive layout calculations.
+
+**Tooltip transparency issues**
+- Solution: Fixed with inline styles and proper CSS specificity.
+
+### Performance Tips
+- Use the visualizer for debugging complex programs
+- Close unused files to reduce memory usage
+- Use the "Stop" button to halt long-running programs
+
 # **LCC.js & LCC+js - An Educational Assembler and Interpreter**
 
 ## **Overview**

@@ -151,28 +151,28 @@ const assemblyInfo = {
     binary_format: "1111 0000 00000000"
   },
   "dout": {
-    descriptive_name: "Display Output",
-    description: "Display value in register",
+    descriptive_name: "Decimal Output",
+    description: "Display signed number (decimal)",
     syntax: "dout sr",
-    explanation: "Displays the value in source register.",
+    explanation: "Displays the value in source register as a signed decimal number. If no register is specified, uses r0.",
     flags_set: "",
-    binary_format: "1111 0001 sr 000000"
+    binary_format: "1111 sr 0 00000010"
   },
   "sout": {
     descriptive_name: "String Output",
-    description: "Display string",
-    syntax: "sout string",
-    explanation: "Displays a string literal.",
+    description: "Display string (null-terminated)",
+    syntax: "sout sr",
+    explanation: "Displays a null-terminated string starting at address in source register. If no register is specified, uses r0.",
     flags_set: "",
-    binary_format: "1111 0010 string"
+    binary_format: "1111 sr 0 00000110"
   },
   "din": {
-    descriptive_name: "Display Input",
-    description: "Get input from user",
+    descriptive_name: "Decimal Input",
+    description: "Read decimal into dr",
     syntax: "din dr",
-    explanation: "Gets input from user and stores in destination register.",
+    explanation: "Reads a decimal number from input and stores it in destination register. If no register is specified, uses r0.",
     flags_set: "",
-    binary_format: "1111 0011 dr 000000"
+    binary_format: "1111 dr 0 00000111"
   },
   "mov": {
     descriptive_name: "Move",
@@ -312,59 +312,59 @@ const assemblyInfo = {
   },
   "nl": {
     descriptive_name: "New Line",
-    description: "Print newline",
+    description: "Output newline",
     syntax: "nl",
-    explanation: "Prints a newline character.",
+    explanation: "Outputs a newline character to the terminal.",
     flags_set: "",
-    binary_format: "1111 0000 00000000"
+    binary_format: "1111 000 0 00000001"
   },
   "udout": {
-    descriptive_name: "Unsigned Display Output",
-    description: "Display unsigned value",
+    descriptive_name: "Unsigned Decimal Output",
+    description: "Display unsigned number (decimal)",
     syntax: "udout sr",
-    explanation: "Displays unsigned value from source register.",
+    explanation: "Displays the value in source register as an unsigned decimal number. If no register is specified, uses r0.",
     flags_set: "",
-    binary_format: "1111 0001 sr 000000"
+    binary_format: "1111 sr 0 00000011"
   },
   "hout": {
-    descriptive_name: "Hex Output",
-    description: "Display hex value",
+    descriptive_name: "Hexadecimal Output",
+    description: "Display number (hex)",
     syntax: "hout sr",
-    explanation: "Displays value from source register in hexadecimal.",
+    explanation: "Displays the value in source register as a hexadecimal number. If no register is specified, uses r0.",
     flags_set: "",
-    binary_format: "1111 0001 sr 000000"
+    binary_format: "1111 sr 0 00000100"
   },
   "aout": {
     descriptive_name: "ASCII Output",
     description: "Display ASCII character",
     syntax: "aout sr",
-    explanation: "Displays ASCII character from source register.",
+    explanation: "Displays the low byte of source register as an ASCII character. If no register is specified, uses r0.",
     flags_set: "",
-    binary_format: "1111 0001 sr 000000"
+    binary_format: "1111 sr 0 00000101"
   },
   "hin": {
-    descriptive_name: "Hex Input",
-    description: "Get hex input",
+    descriptive_name: "Hexadecimal Input",
+    description: "Read hex into dr",
     syntax: "hin dr",
-    explanation: "Gets hexadecimal input from user.",
+    explanation: "Reads a hexadecimal number from input and stores it in destination register. If no register is specified, uses r0.",
     flags_set: "",
-    binary_format: "1111 0011 dr 000000"
+    binary_format: "1111 dr 0 00001000"
   },
   "ain": {
     descriptive_name: "ASCII Input",
-    description: "Get ASCII character",
+    description: "Read ASCII char",
     syntax: "ain dr",
-    explanation: "Gets ASCII character input from user.",
+    explanation: "Reads a single ASCII character from input and stores it in destination register. If no register is specified, uses r0.",
     flags_set: "",
-    binary_format: "1111 0011 dr 000000"
+    binary_format: "1111 dr 0 00001001"
   },
   "sin": {
     descriptive_name: "String Input",
-    description: "Get string input",
-    syntax: "sin dr",
-    explanation: "Gets string input from user.",
+    description: "Read string into buffer",
+    syntax: "sin sr",
+    explanation: "Reads a string from input into memory starting at address in source register. If no register is specified, uses r0.",
     flags_set: "",
-    binary_format: "1111 0011 dr 000000"
+    binary_format: "1111 sr 0 00001010"
   },
   "clear": {
     descriptive_name: "Clear Screen",

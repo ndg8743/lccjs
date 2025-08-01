@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../store/AppStore';
 import Header from './Header';
+import FileExplorer from './FileExplorer';
 import EditorPanel from './EditorPanel';
 import TerminalPanel from './TerminalPanel';
-import FileExplorer from './FileExplorer';
 import Button from './ui/Button';
 
 /**
@@ -12,8 +12,8 @@ import Button from './ui/Button';
  * @returns {JSX.Element} Mobile layout with tabs
  */
 function MobileLayout() {
+  const { openFiles, runProgram } = useApp();
   const [activeTab, setActiveTab] = useState('editor');
-  const { openFiles } = useApp();
 
   const tabs = [
     {

@@ -3,7 +3,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView, Decoration, DecorationSet } from '@codemirror/view';
 import { StateField, StateEffect } from '@codemirror/state';
-// import { createLccMode } from '../../editor/lcc-mode';
+import { createLccMode } from '../../editor/lcc-mode';
 
 /**
  * Code editor component with syntax highlighting for LCC assembly
@@ -12,11 +12,43 @@ function CodeEditor({ code, setCode, currentLine, error, isDarkMode }) {
   const editorRef = useRef(null);
 
   // Create LCC language mode
-  // const lccMode = createLccMode();
+  const lccMode = createLccMode();
+
+  // Create line highlighting effect
+  const highlightLine = StateEffect.define();
+  
+  // State field for line highlighting
+  const lineHighlightField = StateField.define({
+    create() {
+      return Decoration.none;
+    },
+    update(highlights, tr) {
+      highlights = highlights.map(tr.changes);
+      for (let effect of tr.effects) {
+        if (effect.is(highlightLine)) {
+          const lineNumber = effect.value;
+          if (lineNumber >= 0) {
+            const line = tr.state.doc.line(lineNumber + 1);
+            if (line) {
+              const lineDecoration = Decoration.line({
+                class: 'cm-currentLine'
+              });
+              highlights = Decoration.set([lineDecoration.range(line.from)]);
+            }
+          } else {
+            highlights = Decoration.none;
+          }
+        }
+      }
+      return highlights;
+    },
+    provide: f => EditorView.decorations.from(f)
+  });
 
   // Custom theme extensions
   const extensions = [
-    // lccMode,
+    lccMode,
+    lineHighlightField,
     EditorView.theme({
       '&': {
         fontSize: '14px',
@@ -35,6 +67,7 @@ function CodeEditor({ code, setCode, currentLine, error, isDarkMode }) {
       '.cm-currentLine': {
         backgroundColor: isDarkMode ? '#3b82f6' : '#60a5fa',
         color: 'white',
+        fontWeight: 'bold',
       },
     }),
     EditorView.lineWrapping,
@@ -46,7 +79,12 @@ function CodeEditor({ code, setCode, currentLine, error, isDarkMode }) {
       const view = editorRef.current.view;
       if (view && view.state) {
         try {
-          // Simple approach - just scroll to the line and use CSS styling
+          // Apply line highlighting effect
+          view.dispatch({
+            effects: highlightLine.of(currentLine)
+          });
+          
+          // Scroll to the line
           const line = view.state.doc.line(currentLine + 1);
           if (line) {
             view.dispatch({

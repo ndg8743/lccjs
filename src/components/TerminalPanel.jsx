@@ -112,7 +112,7 @@ function TerminalPanel() {
         {/* Output area */}
         <div 
           ref={terminalRef}
-          className="flex-1 overflow-y-auto p-4 bg-black font-mono text-sm leading-relaxed min-h-0"
+          className="flex-1 overflow-y-auto p-4 bg-black font-mono text-sm leading-none min-h-0"
         >
           <AnimatePresence>
             {terminalOutput.map((output, index) => (

@@ -1,175 +1,71 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Rnd } from 'react-rnd';
 import { useApp } from '../store/AppStore';
 import StackVisualizer from '../components/visualizer/StackVisualizer';
 import RegisterPanel from '../components/visualizer/RegisterPanel';
 import MemoryPanel from '../components/visualizer/MemoryPanel';
 import CodeEditor from '../components/visualizer/CodeEditor';
-import InstructionReference from '../components/visualizer/InstructionReference';
 import ExecutionControls from '../components/visualizer/ExecutionControls';
+import InstructionReference from '../components/visualizer/InstructionReference';
+import FileSelector from '../components/visualizer/FileSelector';
+import Button from '../components/ui/Button';
 
 /**
- * LCC Stack Visualizer - Fixed and Robust Implementation
- * No white screen issues, proper full-screen scaling
+ * LCC Stack Visualizer Tool Page
+ * Provides step-through execution visualization for LCC assembly programs
  */
 function StackToolPage() {
-  const { isDarkMode } = useApp();
-  
-  // Error boundary
+  const { isDarkMode, toggleDarkMode } = useApp();
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showFileSelector, setShowFileSelector] = useState(false);
+  const [selectedFile, setSelectedFile] = useState('a1test.a');
   
-  useEffect(() => {
-    const handleError = (error) => {
-      console.error('StackToolPage error:', error);
-      setHasError(true);
-    };
-    
-    window.addEventListener('error', handleError);
-    return () => window.removeEventListener('error', handleError);
-  }, []);
-  
-  if (hasError) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
-          <button 
-            className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700"
-            onClick={() => {
-              setHasError(false);
-              window.location.reload();
-            }}
-          >
-            Reload Page
-          </button>
-        </div>
-      </div>
-    );
-  }
-  
-  // Apply dark mode to HTML element
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDarkMode);
-    document.body.className = isDarkMode 
-      ? 'bg-gray-900 text-gray-100 min-h-screen overflow-hidden'
-      : 'bg-gray-50 text-gray-900 min-h-screen overflow-hidden';
-  }, [isDarkMode]);
-  
-  // Core state
+  // Visualizer state with proper change tracking
   const [code, setCode] = useState('');
-  const [currentLine, setCurrentLine] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [showReference, setShowReference] = useState(false);
-  const [stepCount, setStepCount] = useState(1);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  
-  // LCC State
-  const [registers, setRegisters] = useState({
-    r0: 0, r1: 0, r2: 0, r3: 0, r4: 0, r5: 0, r6: 0xFFF0, r7: 0,
-    pc: 0x3000, sp: 0xFFF0, fp: 0xFFF0, lr: 0, ir: 0,
-    n: false, z: true, c: false, v: false
-  });
-  
-  const [previousRegisters, setPreviousRegisters] = useState({});
-  const [memory, setMemory] = useState(new Uint16Array(65536));
-  const [previousMemory, setPreviousMemory] = useState(new Uint16Array(65536));
-  const [stack, setStack] = useState([]);
-  const [previousStack, setPreviousStack] = useState([]);
+  const [currentLine, setCurrentLine] = useState(-1);
   const [output, setOutput] = useState([]);
   
-  // Execution state
+  // Current state
+  const [registers, setRegisters] = useState({
+    r0: 0, r1: 0, r2: 0, r3: 0, r4: 0, r5: 0, r6: 0, r7: 0,
+    pc: 0x3000, sp: 0xFFF0, fp: 0xFFF0, lr: 0, ir: 0,
+    n: false, z: false, c: false, v: false
+  });
+  
+  // Previous state for change highlighting
+  const [previousRegisters, setPreviousRegisters] = useState({});
+  const [previousMemory, setPreviousMemory] = useState(new Uint16Array(65536));
+  const [previousStack, setPreviousStack] = useState([]);
+  
+  const [memory, setMemory] = useState(new Uint16Array(65536));
+  const [stack, setStack] = useState([]);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [executionSpeed, setExecutionSpeed] = useState(1000);
+  const [error, setError] = useState(null);
+  const [showReference, setShowReference] = useState(false);
+
+  // Core state
   const [program, setProgram] = useState([]);
   const [symbols, setSymbols] = useState({});
   const [currentStep, setCurrentStep] = useState(0);
   const [runInterval, setRunInterval] = useState(null);
-  
-  // Layout state - Full screen responsive
-  const [layouts, setLayouts] = useState({
-    codeEditor: { x: 10, y: 10, width: 400, height: 300 },
-    console: { x: 10, y: 320, width: 400, height: 200 },
-    registers: { x: 420, y: 10, width: 300, height: 250 },
-    stack: { x: 730, y: 10, width: 350, height: 400 },
-    memory: { x: 420, y: 270, width: 660, height: 250 },
-    controls: { x: 10, y: 530, width: 400, height: 80 }
-  });
 
-  // Load demo file
+  // Set dark mode on mount
   useEffect(() => {
-    fetch('/demos/a1test.a')
-      .then(res => res.text())
-      .then(content => {
-        setCode(content);
-        setIsLoading(false);
-      })
-      .catch(err => {
-        console.error('Error loading demo:', err);
-        setCode('; Error loading demo\nhalt');
-        setIsLoading(false);
-      });
-  }, []);
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    document.body.className = isDarkMode
+      ? 'bg-gray-900 text-white overflow-hidden'
+      : 'bg-gray-50 text-gray-900 overflow-hidden';
+  }, [isDarkMode]);
 
-  // Handle window resize for full-screen scaling
+  // Handle window resize for mobile detection
   useEffect(() => {
     const handleResize = () => {
-      try {
-        const isMobileNow = window.innerWidth < 768;
-        setIsMobile(isMobileNow);
-        
-        if (!isMobileNow && window.innerWidth > 320 && window.innerHeight > 200) {
-          // Calculate full-screen layouts with safe bounds
-          const vw = Math.max(800, window.innerWidth); // Minimum width
-          const vh = Math.max(600, window.innerHeight - 48); // Minimum height
-          
-          // Calculate safe percentages
-          const safeLayouts = {
-            codeEditor: { 
-              x: Math.max(0, vw * 0.01), 
-              y: Math.max(0, vh * 0.01), 
-              width: Math.min(vw * 0.9, vw * 0.32), 
-              height: Math.min(vh * 0.9, vh * 0.52)
-            },
-            console: { 
-              x: Math.max(0, vw * 0.01), 
-              y: Math.max(0, vh * 0.54), 
-              width: Math.min(vw * 0.9, vw * 0.32), 
-              height: Math.min(vh * 0.4, vh * 0.28)
-            },
-            registers: { 
-              x: Math.max(0, vw * 0.34), 
-              y: Math.max(0, vh * 0.01), 
-              width: Math.min(vw * 0.6, vw * 0.22), 
-              height: Math.min(vh * 0.8, vh * 0.40)
-            },
-            stack: { 
-              x: Math.max(0, vw * 0.57), 
-              y: Math.max(0, vh * 0.01), 
-              width: Math.min(vw * 0.4, vw * 0.42), 
-              height: Math.min(vh * 0.9, vh * 0.52)
-            },
-            memory: { 
-              x: Math.max(0, vw * 0.34), 
-              y: Math.max(0, vh * 0.42), 
-              width: Math.min(vw * 0.6, vw * 0.65), 
-              height: Math.min(vh * 0.5, vh * 0.40)
-            },
-            controls: { 
-              x: Math.max(0, vw * 0.01), 
-              y: Math.max(0, vh * 0.83), 
-              width: Math.min(vw * 0.9, vw * 0.32), 
-              height: Math.min(vh * 0.3, vh * 0.15)
-            }
-          };
-          
-          setLayouts(safeLayouts);
-        }
-      } catch (error) {
-        console.warn('Error in resize handler:', error);
-        // Fallback to mobile layout on error
-        setIsMobile(true);
-      }
+      const isMobileNow = window.innerWidth < 768;
+      setIsMobile(isMobileNow);
     };
     
     window.addEventListener('resize', handleResize);
@@ -186,7 +82,48 @@ function StackToolPage() {
     };
   }, [runInterval]);
 
-  // Simple assembler - just parse the code into executable steps
+  // Load demo file
+  useEffect(() => {
+    fetch('/demos/a1test.a')
+      .then(res => res.text())
+      .then(content => {
+        setCode(content);
+        setSelectedFile('a1test.a');
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error('Error loading demo:', err);
+        setCode('; Error loading demo\nhalt');
+        setIsLoading(false);
+      });
+  }, []);
+
+  // Handle file selection
+  const handleFileSelect = (fileName) => {
+    const { fileTree } = useApp.getState();
+    const fileContent = fileTree[fileName];
+    if (fileContent) {
+      setCode(fileContent);
+      setSelectedFile(fileName);
+      setCurrentLine(0);
+      setOutput([]);
+      // Reset LCC state
+      const newRegisters = {
+        r0: 0, r1: 0, r2: 0, r3: 0, r4: 0, r5: 0, r6: 0, r7: 0,
+        pc: 0x3000, sp: 0xFFF0, fp: 0xFFF0, lr: 0, ir: 0,
+        n: false, z: false, c: false, v: false
+      };
+      setRegisters(newRegisters);
+      setPreviousRegisters({});
+      setMemory(new Uint16Array(65536));
+      setPreviousMemory(new Uint16Array(65536));
+      setStack([]);
+      setPreviousStack([]);
+      setCurrentStep(0);
+    }
+  };
+
+  // Simple assembler - parse the code into executable steps
   const assembleCode = useCallback((sourceCode) => {
     try {
       const lines = sourceCode.split('\n');
@@ -246,24 +183,26 @@ function StackToolPage() {
     }
   }, []);
 
-  // Execute a single instruction step - SIMPLIFIED
-  const executeStep = useCallback((stepIndex) => {
+  // Execute a single instruction step
+  const executeStep = useCallback((stepIndex, currentRegisters, currentMemory, currentStack, currentSymbols) => {
     if (stepIndex >= program.length) return false;
     
     const step = program[stepIndex];
-    const newRegisters = { ...registers };
-    const newMemory = new Uint16Array(memory);
-    const newStack = [...stack];
     
     // Save previous state for highlighting
-    setPreviousRegisters({ ...registers });
-    setPreviousMemory(new Uint16Array(memory));
-    setPreviousStack([...stack]);
+    setPreviousRegisters({ ...currentRegisters });
+    setPreviousMemory(new Uint16Array(currentMemory));
+    setPreviousStack([...currentStack]);
     
-    // Update current line
+    const newRegisters = { ...currentRegisters };
+    const newMemory = new Uint16Array(currentMemory);
+    const newStack = [...currentStack];
+    
+    // Update current line and IR
     setCurrentLine(step.line);
+    newRegisters.ir = step.address;
     
-    // Execute based on opcode - SIMPLIFIED LOGIC
+    // Execute based on opcode
     switch (step.opcode) {
       case 'halt':
         setOutput(prev => [...prev, 'Program halted']);
@@ -282,8 +221,8 @@ function StackToolPage() {
       case 'lea':
         const leaReg = step.operands[0].replace(/r/i, '');
         const leaLabel = step.operands[1];
-        if (symbols[leaLabel] !== undefined) {
-          newRegisters[`r${leaReg}`] = symbols[leaLabel];
+        if (currentSymbols[leaLabel] !== undefined) {
+          newRegisters[`r${leaReg}`] = currentSymbols[leaLabel];
           setFlags(newRegisters, newRegisters[`r${leaReg}`]);
         }
         break;
@@ -327,8 +266,8 @@ function StackToolPage() {
       case 'ld':
         const ldReg = step.operands[0].replace(/r/i, '');
         const ldLabel = step.operands[1];
-        if (symbols[ldLabel] !== undefined) {
-          newRegisters[`r${ldReg}`] = newMemory[symbols[ldLabel]];
+        if (currentSymbols[ldLabel] !== undefined) {
+          newRegisters[`r${ldReg}`] = newMemory[currentSymbols[ldLabel]];
           setFlags(newRegisters, newRegisters[`r${ldReg}`]);
         }
         break;
@@ -336,8 +275,8 @@ function StackToolPage() {
       case 'st':
         const stReg = step.operands[0].replace(/r/i, '');
         const stLabel = step.operands[1];
-        if (symbols[stLabel] !== undefined) {
-          newMemory[symbols[stLabel]] = newRegisters[`r${stReg}`];
+        if (currentSymbols[stLabel] !== undefined) {
+          newMemory[currentSymbols[stLabel]] = newRegisters[`r${stReg}`];
         }
         break;
         
@@ -350,8 +289,8 @@ function StackToolPage() {
         
       case 'br':
         const brLabel = step.operands[0];
-        if (symbols[brLabel] !== undefined) {
-          const targetStep = program.find(p => p.address === symbols[brLabel]);
+        if (currentSymbols[brLabel] !== undefined) {
+          const targetStep = program.find(p => p.address === currentSymbols[brLabel]);
           if (targetStep) {
             setCurrentStep(program.indexOf(targetStep));
             setRegisters(newRegisters);
@@ -364,8 +303,8 @@ function StackToolPage() {
         
       case 'brz':
         const brzLabel = step.operands[0];
-        if (newRegisters.z && symbols[brzLabel] !== undefined) {
-          const targetStep = program.find(p => p.address === symbols[brzLabel]);
+        if (newRegisters.z && currentSymbols[brzLabel] !== undefined) {
+          const targetStep = program.find(p => p.address === currentSymbols[brzLabel]);
           if (targetStep) {
             setCurrentStep(program.indexOf(targetStep));
             setRegisters(newRegisters);
@@ -378,8 +317,8 @@ function StackToolPage() {
         
       case 'brp':
         const brpLabel = step.operands[0];
-        if (!newRegisters.n && !newRegisters.z && symbols[brpLabel] !== undefined) {
-          const targetStep = program.find(p => p.address === symbols[brpLabel]);
+        if (!newRegisters.n && !newRegisters.z && currentSymbols[brpLabel] !== undefined) {
+          const targetStep = program.find(p => p.address === currentSymbols[brpLabel]);
           if (targetStep) {
             setCurrentStep(program.indexOf(targetStep));
             setRegisters(newRegisters);
@@ -392,8 +331,8 @@ function StackToolPage() {
         
       case 'brn':
         const brnLabel = step.operands[0];
-        if (newRegisters.n && symbols[brnLabel] !== undefined) {
-          const targetStep = program.find(p => p.address === symbols[brnLabel]);
+        if (newRegisters.n && currentSymbols[brnLabel] !== undefined) {
+          const targetStep = program.find(p => p.address === currentSymbols[brnLabel]);
           if (targetStep) {
             setCurrentStep(program.indexOf(targetStep));
             setRegisters(newRegisters);
@@ -419,10 +358,10 @@ function StackToolPage() {
         
       case 'bl':
         const blLabel = step.operands[0];
-        if (symbols[blLabel] !== undefined) {
+        if (currentSymbols[blLabel] !== undefined) {
           newRegisters.r7 = newRegisters.pc + 1;
           newRegisters.lr = newRegisters.r7;
-          const targetStep = program.find(p => p.address === symbols[blLabel]);
+          const targetStep = program.find(p => p.address === currentSymbols[blLabel]);
           if (targetStep) {
             setCurrentStep(program.indexOf(targetStep));
             setRegisters(newRegisters);
@@ -497,7 +436,7 @@ function StackToolPage() {
     setStack(newStack);
     
     return true;
-  }, [program, registers, memory, stack, symbols]);
+  }, [program]);
 
   // Helper functions
   const toSigned16 = (value) => {
@@ -513,7 +452,7 @@ function StackToolPage() {
     regs.z = (value & 0xFFFF) === 0;
   };
 
-  // Step handler - FIXED LOGIC
+  // Step handler
   const handleStep = useCallback((steps) => {
     if (!program.length) {
       if (!assembleCode(code)) return;
@@ -547,7 +486,7 @@ function StackToolPage() {
           return;
         }
         
-        const canContinue = executeStep(currentStep);
+        const canContinue = executeStep(currentStep, registers, memory, stack, symbols);
         if (canContinue) {
           setCurrentStep(prev => prev + 1);
         } else {
@@ -560,15 +499,17 @@ function StackToolPage() {
     } else if (steps > 0) {
       // Step forward
       for (let i = 0; i < steps && currentStep < program.length; i++) {
-        if (!executeStep(currentStep)) break;
+        if (!executeStep(currentStep, registers, memory, stack, symbols)) break;
         setCurrentStep(prev => prev + 1);
       }
     } else if (steps < 0) {
-      // Step backward (simplified - just reset to beginning)
-      setCurrentStep(0);
-      handleReset();
+      // Step backward - go to previous step instead of resetting
+      if (currentStep > 0) {
+        setCurrentStep(prev => prev - 1);
+        // TODO: Implement proper step-back with state restoration
+      }
     }
-  }, [program, code, assembleCode, executeStep, currentStep, runInterval]);
+  }, [program, code, assembleCode, executeStep, currentStep, runInterval, registers, memory, stack, symbols]);
 
   // Reset handler
   const handleReset = useCallback(() => {
@@ -578,11 +519,13 @@ function StackToolPage() {
       setRunInterval(null);
     }
     
-    setRegisters({
-      r0: 0, r1: 0, r2: 0, r3: 0, r4: 0, r5: 0, r6: 0xFFF0, r7: 0,
+    const newRegisters = {
+      r0: 0, r1: 0, r2: 0, r3: 0, r4: 0, r5: 0, r6: 0, r7: 0,
       pc: 0x3000, sp: 0xFFF0, fp: 0xFFF0, lr: 0, ir: 0,
-      n: false, z: true, c: false, v: false
-    });
+      n: false, z: false, c: false, v: false
+    };
+    
+    setRegisters(newRegisters);
     setPreviousRegisters({});
     setMemory(new Uint16Array(65536));
     setPreviousMemory(new Uint16Array(65536));
@@ -691,8 +634,6 @@ function StackToolPage() {
                   onStep={handleStep}
                   onReset={handleReset}
                   isRunning={isRunning}
-                  stepCount={stepCount}
-                  setStepCount={setStepCount}
                   isDarkMode={isDarkMode}
                 />
               </div>
@@ -703,29 +644,54 @@ function StackToolPage() {
     );
   }
 
-  // Desktop layout - FULL SCREEN with error boundary
-  try {
-    return (
-      <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} overflow-hidden`}>
+  // Desktop layout - Simplified and stable
+  return (
+    <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} overflow-hidden`}>
       {/* Header */}
       <div className={`h-12 px-4 flex items-center justify-between flex-shrink-0 ${
         isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-300'
       } border-b`}>
-        <h1 className={`text-xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-          LCC Stack Visualizer
-        </h1>
         <div className="flex items-center space-x-4">
+          <h1 className={`text-lg sm:text-xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+            LCC Stack Visualizer
+          </h1>
+          {selectedFile && (
+            <div className={`text-sm px-2 py-1 rounded ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'}`}>
+              <i className="fas fa-file-code mr-1"></i>
+              {selectedFile}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <button
+            onClick={() => setShowFileSelector(true)}
+            className={`px-2 sm:px-3 py-1 rounded-md transition-colors ${
+              isDarkMode
+                ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+            }`}
+            title="Select File"
+          >
+            <i className="fas fa-folder-open mr-1 sm:mr-2"></i>
+            <span className="hidden sm:inline">Files</span>
+          </button>
           <button
             onClick={() => window.location.href = '/'}
-            className={`px-3 py-1 rounded-md transition-colors ${
+            className={`px-2 sm:px-3 py-1 rounded-md transition-colors ${
               isDarkMode
                 ? 'text-gray-300 hover:text-white hover:bg-gray-700'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
             }`}
           >
-            <i className="fas fa-arrow-left mr-2"></i>
-            Back to IDE
+            <i className="fas fa-arrow-left mr-1 sm:mr-2"></i>
+            <span className="hidden sm:inline">Back</span>
           </button>
+          <Button
+            variant="secondary"
+            onClick={toggleDarkMode}
+            icon={isDarkMode ? "fas fa-sun" : "fas fa-moon"}
+            className="hidden sm:inline"
+          />
         </div>
       </div>
 
@@ -738,19 +704,11 @@ function StackToolPage() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 relative overflow-hidden">
-          {/* Code Editor */}
-          <Rnd
-            default={layouts.codeEditor}
-            minWidth={300}
-            minHeight={200}
-            maxWidth="60%"
-            maxHeight="80%"
-            bounds="parent"
-            className="bg-gray-800 rounded-lg overflow-hidden shadow-xl"
-          >
+        <div className="flex-1 grid grid-cols-12 grid-rows-6 gap-4 p-4 overflow-hidden">
+          {/* Code Editor - Top Left */}
+          <div className="col-span-4 row-span-3 bg-gray-800 rounded-lg overflow-hidden shadow-xl">
             <div className="h-full flex flex-col">
-              <div className={`px-4 py-2 text-sm font-semibold cursor-move ${
+              <div className={`px-4 py-2 text-sm font-semibold ${
                 isDarkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-200 text-gray-800'
               }`}>
                 CODE EDITOR
@@ -765,20 +723,12 @@ function StackToolPage() {
                 />
               </div>
             </div>
-          </Rnd>
+          </div>
 
-          {/* Console */}
-          <Rnd
-            default={layouts.console}
-            minWidth={300}
-            minHeight={100}
-            maxWidth="60%"
-            maxHeight="40%"
-            bounds="parent"
-            className="bg-gray-800 rounded-lg overflow-hidden shadow-xl"
-          >
+          {/* Console Output - Bottom Left */}
+          <div className="col-span-4 row-span-2 bg-gray-800 rounded-lg overflow-hidden shadow-xl">
             <div className="h-full flex flex-col">
-              <div className="bg-gray-700 px-4 py-2 text-sm font-semibold cursor-move">
+              <div className="bg-gray-700 px-4 py-2 text-sm font-semibold">
                 CONSOLE OUTPUT
               </div>
               <div className="flex-1 p-4 font-mono text-sm overflow-y-auto">
@@ -795,20 +745,29 @@ function StackToolPage() {
                 ))}
               </div>
             </div>
-          </Rnd>
+          </div>
 
-          {/* Stack Visualizer */}
-          <Rnd
-            default={layouts.stack}
-            minWidth={300}
-            minHeight={250}
-            maxWidth="50%"
-            maxHeight="80%"
-            bounds="parent"
-            className="bg-gray-800 rounded-lg overflow-hidden shadow-xl"
-          >
+          {/* Controls - Bottom Left */}
+          <div className="col-span-4 row-span-1 bg-gray-800 rounded-lg shadow-xl">
             <div className="h-full flex flex-col">
-              <div className="bg-gray-700 px-4 py-2 text-sm font-semibold cursor-move">
+              <div className="bg-gray-700 px-4 py-2 text-sm font-semibold">
+                EXECUTION CONTROLS
+              </div>
+              <div className="flex-1 p-4">
+                <ExecutionControls
+                  onStep={handleStep}
+                  onReset={handleReset}
+                  isRunning={isRunning}
+                  isDarkMode={isDarkMode}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Stack Visualizer - Top Right */}
+          <div className="col-span-4 row-span-3 bg-gray-800 rounded-lg overflow-hidden shadow-xl">
+            <div className="h-full flex flex-col">
+              <div className="bg-gray-700 px-4 py-2 text-sm font-semibold">
                 STACK VISUALIZATION
               </div>
               <div className="flex-1 p-4 overflow-hidden">
@@ -821,73 +780,27 @@ function StackToolPage() {
                 />
               </div>
             </div>
-          </Rnd>
+          </div>
 
-          {/* Registers */}
-          <Rnd
-            default={layouts.registers}
-            minWidth={250}
-            minHeight={200}
-            maxWidth="35%"
-            maxHeight="60%"
-            bounds="parent"
-            className="shadow-xl"
-          >
+          {/* Registers - Middle Right */}
+          <div className="col-span-4 row-span-2 bg-gray-800 rounded-lg shadow-xl">
             <RegisterPanel
               registers={registers}
               previousRegisters={previousRegisters}
               isDarkMode={isDarkMode}
-              draggable={true}
             />
-          </Rnd>
+          </div>
 
-          {/* Memory */}
-          <Rnd
-            default={layouts.memory}
-            minWidth={400}
-            minHeight={200}
-            maxWidth="80%"
-            maxHeight="60%"
-            bounds="parent"
-            className="shadow-xl"
-          >
+          {/* Memory - Bottom Right */}
+          <div className="col-span-4 row-span-1 bg-gray-800 rounded-lg shadow-xl">
             <MemoryPanel
               memory={memory}
               previousMemory={previousMemory}
               pc={registers.pc}
               sp={registers.sp}
               isDarkMode={isDarkMode}
-              draggable={true}
             />
-          </Rnd>
-
-          {/* Controls */}
-          <Rnd
-            default={layouts.controls}
-            minWidth={300}
-            minHeight={60}
-            maxWidth="50%"
-            maxHeight="20%"
-            bounds="parent"
-            className="bg-gray-800 rounded-lg shadow-xl"
-            enableResizing={false}
-          >
-            <div className="h-full flex flex-col">
-              <div className="bg-gray-700 px-4 py-2 text-sm font-semibold cursor-move">
-                EXECUTION CONTROLS
-              </div>
-              <div className="flex-1 p-4">
-                <ExecutionControls
-                  onStep={handleStep}
-                  onReset={handleReset}
-                  isRunning={isRunning}
-                  stepCount={stepCount}
-                  setStepCount={setStepCount}
-                  isDarkMode={isDarkMode}
-                />
-              </div>
-            </div>
-          </Rnd>
+          </div>
         </div>
       )}
 
@@ -903,6 +816,13 @@ function StackToolPage() {
         <i className="fas fa-book text-xl"></i>
       </motion.button>
 
+      {/* File Selector */}
+      <FileSelector
+        isVisible={showFileSelector}
+        onClose={() => setShowFileSelector(false)}
+        onFileSelect={handleFileSelect}
+      />
+
       {/* Instruction Reference */}
       <AnimatePresence>
         {showReference && (
@@ -913,38 +833,7 @@ function StackToolPage() {
         )}
       </AnimatePresence>
     </div>
-    );
-  } catch (error) {
-    console.error('StackToolPage render error:', error);
-    // Fallback to mobile layout on render error
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <i className="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-4"></i>
-          <h1 className="text-2xl font-bold mb-4">Visualization Error</h1>
-          <p className="text-gray-300 mb-6">
-            The visualizer encountered an error. This may be due to window size or browser compatibility.
-          </p>
-          <div className="space-y-2">
-            <button 
-              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
-              onClick={() => window.location.reload()}
-            >
-              <i className="fas fa-refresh mr-2"></i>
-              Reload Page
-            </button>
-            <button 
-              className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded transition-colors"
-              onClick={() => window.location.href = '/'}
-            >
-              <i className="fas fa-arrow-left mr-2"></i>
-              Back to IDE
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  );
 }
 
 export default StackToolPage;

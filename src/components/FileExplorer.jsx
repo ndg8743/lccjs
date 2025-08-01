@@ -116,32 +116,10 @@ function FileExplorer() {
 
   // Handle download with different extensions - use the global functions
   const handleDownload = useCallback((extension) => {
-    // Use the global downloadFile function from main.js for generated files
-    if (extension === '.a') {
-      // For source files, get content from editor/storage and download
-      const content = window.editor?.getValue() || '';
-      if (!content) {
-        addTerminalOutput('No content to download. Please load a file first.', 'text-yellow-400');
-        return;
-      }
-      
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = currentFileName || 'program.a';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      addTerminalOutput(`✓ Downloaded: ${currentFileName}`, 'text-green-400');
-    } else {
-      // For generated files (.lst, .bst, .e), use the store function
-      downloadFile(currentFileName, extension);
-    }
+    // Use the store's downloadFile function for all file types
+    downloadFile(currentFileName, extension);
     setShowDownloadMenu(false);
-  }, [currentFileName, addTerminalOutput]);
+  }, [currentFileName, downloadFile]);
 
   return (
     <motion.div
