@@ -156,14 +156,14 @@ function MemoryPanel({ memory = {}, previousMemory = {}, pc, sp, isDarkMode }) {
       </div>
 
       <div className="flex-1 p-2 overflow-hidden">
-        <div ref={scrollRef} className="h-full overflow-y-auto">
+        <div ref={scrollRef} className="h-full overflow-y-auto relative">
           {/* Memory Grid */}
           <table className="w-full">
             <thead>
               <tr>
-                <th className="text-left text-xs text-gray-400 font-normal pb-1">Addr</th>
+                <th className="sticky top-0 bg-gray-800 z-10 text-left text-xs text-gray-400 font-normal pb-1">Addr</th>
                 {[...Array(16)].map((_, i) => (
-                  <th key={i} className="text-center text-xs text-gray-400 font-normal pb-1">
+                  <th key={i} className="sticky top-0 bg-gray-800 z-10 text-center text-xs text-gray-400 font-normal pb-1">
                     +{i.toString(16).toUpperCase()}
                   </th>
                 ))}
