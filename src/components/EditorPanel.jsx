@@ -6,7 +6,7 @@ import { EditorView } from '@codemirror/view';
 import { hoverTooltip } from '@codemirror/view';
 import { StateField, StateEffect } from '@codemirror/state';
 import { useApp } from '../store/AppStore';
-import { createLccMode } from '../editor/lcc-mode';
+
 
 /**
  * Assembly instruction information for tooltips
@@ -470,6 +470,26 @@ function createTooltip(info, line) {
   const dom = document.createElement('div');
   dom.className = 'lcc-tooltip';
   
+  // Apply inline styles to ensure visibility
+  Object.assign(dom.style, {
+    backgroundColor: '#252526',
+    color: '#d4d4d4',
+    border: '1px solid #454545',
+    borderRadius: '4px',
+    padding: '12px 16px',
+    fontSize: '13px',
+    fontFamily: 'Consolas, Monaco, "Lucida Console", "Courier New", monospace',
+    lineHeight: '1.5',
+    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.6)',
+    minWidth: '450px',
+    maxWidth: '600px',
+    zIndex: '10000',
+    display: 'block',
+    opacity: '1',
+    visibility: 'visible',
+    position: 'fixed'
+  });
+  
   // Parse binary format to show bit positions  
   let binaryFormatted = info.binary_format;
   if (info.binary_format && info.binary_format.includes(' ')) {
@@ -502,52 +522,40 @@ function createTooltip(info, line) {
   
   dom.innerHTML = `
     <div class="hover-header">
-      <span class="hover-instruction-name">${info.syntax.split(' ')[0]}</span>
-      <span class="hover-mnemonic">${info.descriptive_name}</span>
+      <span class="hover-instruction-name">${info.descriptive_name}</span>
     </div>
-    <div class="hover-divider"></div>
     
     <div class="hover-section">
-      <div class="hover-label">Syntax:</div>
       <div class="hover-value hover-syntax">${info.syntax}</div>
     </div>
     
     <div class="hover-section">
-      <div class="hover-label">Operation:</div>
-      <div class="hover-value hover-operation">${info.description}</div>
+      <div class="hover-value hover-formula">${info.description}</div>
     </div>
     
     <div class="hover-section">
-      <div class="hover-label">Binary Format:</div>
-      <div class="hover-value hover-binary">
-        <span class="hover-opcode">${info.binary_format.split(' ')[0]}</span>
-        <span class="hover-operands">${binaryFormatted.substring(4)}</span>
-      </div>
-    </div>
-    
-    ${info.offset ? `
-    <div class="hover-section">
-      <div class="hover-label">Example Offset:</div>
-      <div class="hover-value">${info.offset}</div>
-    </div>
-    ` : ''}
-    
-    <div class="hover-section">
-      <div class="hover-label">Description:</div>
       <div class="hover-value hover-description">${info.explanation}</div>
     </div>
     
     <div class="hover-section">
+      <div class="hover-label">Binary format:</div>
+      <div class="hover-value hover-binary">${info.binary_format} ${binaryFormatted}</div>
+    </div>
+    
+    ${info.offset ? `
+    <div class="hover-section">
+      <div class="hover-value">${info.offset}</div>
+    </div>
+    ` : ''}
+    
+    ${info.flags_set ? `
+    <div class="hover-section">
       <div class="hover-label">Flags Affected:</div>
-      <div class="hover-value hover-flags-value">
-        ${info.flags_set ? 
-          info.flags_set.toUpperCase().split('').map(f => 
-            `<span class="hover-flag">${f}</span>`
-          ).join(' ') 
-          : '<span class="hover-no-flags">None</span>'
-        }
+      <div class="hover-value">
+        ${info.flags_set.toUpperCase().split('').join(', ')}
       </div>
     </div>
+    ` : ''}
   `;
   return dom;
 }
@@ -622,20 +630,25 @@ function EditorPanel() {
   const editorRef = useRef(null);
 
   // Create LCC language mode
-  const lccMode = createLccMode();
+  
 
   // Editor extensions
   const extensions = [
-    lccMode,
+    
     lccHoverTooltip,
     EditorView.theme({
       '&': {
         fontSize: '14px',
         height: '100%',
+        backgroundColor: isDarkMode ? '#1e1e1e' : '#ffffff',
+        border: 'none',
+        borderRadius: '0',
       },
       '.cm-content': {
         padding: '16px',
         minHeight: '100%',
+        backgroundColor: 'transparent',
+        color: isDarkMode ? '#e2e8f0' : '#1e293b',
       },
       '.cm-focused': {
         outline: 'none',
@@ -649,6 +662,18 @@ function EditorPanel() {
         fontFamily: '"Fira Code", "JetBrains Mono", "Monaco", "Consolas", monospace',
         flex: 1,
         overflow: 'auto',
+      },
+      '.cm-gutters': {
+        backgroundColor: isDarkMode ? '#252526' : '#f1f5f9',
+        color: isDarkMode ? '#858585' : '#94a3b8',
+        border: 'none',
+        borderRight: isDarkMode ? '1px solid #2d2d30' : '1px solid #e2e8f0',
+      },
+      '.cm-activeLineGutter': {
+        backgroundColor: isDarkMode ? '#2d2d30' : '#e2e8f0',
+      },
+      '.cm-activeLine': {
+        backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.04)' : '#f1f5f9',
       },
       '.cm-tooltip': {
         backgroundColor: 'transparent !important',
@@ -665,6 +690,19 @@ function EditorPanel() {
       '.cm-tooltip .lcc-tooltip': {
         display: 'block !important',
         opacity: '1 !important',
+        visibility: 'visible !important',
+        backgroundColor: '#252526 !important',
+        color: '#d4d4d4 !important',
+        border: '1px solid #454545 !important',
+        borderRadius: '4px !important',
+        padding: '12px 16px !important',
+        fontSize: '13px !important',
+        fontFamily: 'Consolas, Monaco, "Lucida Console", "Courier New", monospace !important',
+        lineHeight: '1.5 !important',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.6) !important',
+        minWidth: '450px !important',
+        maxWidth: '600px !important',
+        zIndex: '10000 !important',
       },
     }),
     EditorView.lineWrapping,
@@ -691,13 +729,13 @@ function EditorPanel() {
       transition={{ duration: 0.3, delay: 0.1 }}
     >
       {/* Editor header */}
-      <div className="flex justify-between items-center p-3 bg-secondary-800 border-b border-secondary-700 flex-shrink-0">
-        <h2 className="text-base font-semibold text-primary-400 flex items-center">
-          <i className="fas fa-code mr-2 text-primary-400" />
+      <div className="flex justify-between items-center px-4 py-2 bg-gray-800 border-b border-gray-700 flex-shrink-0">
+        <h2 className="text-sm font-medium text-gray-300 flex items-center">
+          <i className="fas fa-code mr-2 text-gray-400" />
           Editor
         </h2>
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-secondary-400">
+          <span className="text-xs text-gray-400">
             {currentFileName}
           </span>
         </div>

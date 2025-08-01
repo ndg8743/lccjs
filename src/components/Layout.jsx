@@ -40,8 +40,8 @@ function Layout() {
   useEffect(() => {
     document.documentElement.className = isDarkMode ? 'dark' : '';
     document.body.className = isDarkMode 
-      ? 'bg-secondary-900 text-secondary-100 min-h-screen'
-      : 'bg-gray-50 text-gray-900 min-h-screen';
+      ? 'bg-gray-900 text-gray-100 min-h-screen overflow-hidden'
+      : 'bg-gray-50 text-gray-900 min-h-screen overflow-hidden';
   }, [isDarkMode]);
 
   // Handle mouse events for dragging (vertical layout)
@@ -115,7 +115,7 @@ function Layout() {
   // Desktop layout
   return (
     <motion.div 
-      className="flex flex-col h-screen"
+      className="flex flex-col h-screen overflow-hidden bg-gray-900"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}

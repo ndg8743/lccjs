@@ -88,18 +88,19 @@ function TerminalPanel() {
       transition={{ duration: 0.3, delay: 0.2 }}
     >
       {/* Terminal header */}
-      <div className="flex justify-between items-center p-3 bg-secondary-800 border-b border-secondary-700 flex-shrink-0">
-        <h2 className="text-base font-semibold text-primary-400 flex items-center">
-          <i className="fas fa-terminal mr-2 text-primary-400" />
+      <div className="flex justify-between items-center px-4 py-2 bg-gray-800 border-b border-gray-700 flex-shrink-0">
+        <h2 className="text-sm font-medium text-gray-300 flex items-center">
+          <i className="fas fa-terminal mr-2 text-gray-400" />
           Terminal
         </h2>
         <div className="flex space-x-2">
           <Button
-            variant="secondary"
+            variant="ghost"
             size="sm"
             onClick={clearTerminalOutput}
             icon="fas fa-trash-alt"
             title="Clear terminal output"
+            className="text-gray-400 hover:text-gray-200"
           >
             Clear
           </Button>
@@ -111,7 +112,7 @@ function TerminalPanel() {
         {/* Output area */}
         <div 
           ref={terminalRef}
-          className="flex-1 overflow-y-auto p-3 bg-secondary-900 font-mono text-sm leading-relaxed min-h-0"
+          className="flex-1 overflow-y-auto p-4 bg-black font-mono text-sm leading-relaxed min-h-0"
         >
           <AnimatePresence>
             {terminalOutput.map((output, index) => (
@@ -146,10 +147,10 @@ function TerminalPanel() {
         {/* Input area */}
         <form 
           onSubmit={handleSubmit}
-          className="border-t border-secondary-700 p-2 bg-secondary-800 flex-shrink-0"
+          className="border-t border-gray-700 p-3 bg-gray-900 flex-shrink-0"
         >
           <div className="flex items-center space-x-2">
-            <span className="text-primary-400 font-mono text-sm">$</span>
+            <span className="text-green-500 font-mono text-sm">$</span>
             <input
               ref={inputRef}
               type="text"
@@ -157,12 +158,12 @@ function TerminalPanel() {
               onChange={(e) => setTerminalInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={isWaitingForInput ? "Program is waiting for input..." : "Type here and press Enter"}
-              className="flex-1 bg-transparent text-secondary-100 placeholder-secondary-500 font-mono text-sm focus:outline-none"
+              className="flex-1 bg-transparent text-gray-200 placeholder-gray-600 font-mono text-sm focus:outline-none"
               autoComplete="off"
             />
             {isWaitingForInput && (
               <motion.div
-                className="w-2 h-4 bg-primary-400 rounded-sm"
+                className="w-2 h-4 bg-green-500 rounded-sm"
                 animate={{ opacity: [1, 0] }}
                 transition={{ duration: 1, repeat: Infinity }}
               />

@@ -5,7 +5,6 @@ export default {
   mode: "development",
   entry: {
     bundle: "./src/core/lcc.js",
-    main: "./src/main.js",
     app: "./src/App.jsx", // New React entry point
     visualizer: "./src/VisualizerApp.jsx",
     resources: "./src/ResourcesApp.jsx"
