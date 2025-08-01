@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 /**
  * Execution control panel with responsive step controls
  */
-function ExecutionControls({ onStep, onReset, isRunning, isDarkMode, compact = false }) {
+function ExecutionControls({ onStep, onReset, onGetCorrectOutput, isRunning, isDarkMode, compact = false }) {
   const handleStep = (direction) => {
     onStep(direction);
   };
@@ -60,7 +60,17 @@ function ExecutionControls({ onStep, onReset, isRunning, isDarkMode, compact = f
           ? 'bg-gray-700 hover:bg-gray-600 text-white'
           : 'bg-gray-200 hover:bg-gray-300 text-gray-800',
       title: 'Reset Program'
-    }
+    },
+    ...(onGetCorrectOutput ? [{
+      label: compact ? '' : 'Correct Output',
+      icon: 'fas fa-check-circle',
+      onClick: onGetCorrectOutput,
+      disabled: isRunning,
+      className: isRunning 
+        ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+        : 'bg-green-500 hover:bg-green-600 text-white',
+      title: 'Get Correct Output from Real LCC'
+    }] : [])
   ];
 
   return (

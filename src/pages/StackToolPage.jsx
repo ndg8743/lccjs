@@ -18,7 +18,30 @@ import Header from '../components/Header';
 /**
  * LCC Stack Visualizer Tool Page
  * Provides step-through execution visualization for LCC assembly programs
- * Now using the real LCC assembler and interpreter
+ * 
+ * ARCHITECTURE:
+ * ============
+ * This visualizer uses a hybrid approach to provide both accurate results and step-through visualization:
+ * 
+ * 1. JAVASCRIPT SIMULATOR (LCCSimulator.js):
+ *    - Used for step-by-step visualization of registers, memory, stack, and PC
+ *    - Provides interactive stepping (forward/backward)
+ *    - Shows real-time state changes during execution
+ *    - May have minor inaccuracies in complex calculations
+ * 
+ * 2. REAL LCC COMPILER (via worker.js):
+ *    - Used for generating correct program output
+ *    - Provides accurate assembly, linking, and execution
+ *    - Generates correct .lst, .bst, .e files
+ *    - Used for final output verification
+ * 
+ * 3. SYNCHRONIZATION:
+ *    - Step-through uses JavaScript simulator for visualization
+ *    - "Run to completion" gets correct output from worker
+ *    - Output panel shows accurate results from real LCC
+ *    - Visualization panels show interactive step-through state
+ * 
+ * This approach ensures both educational value (step-through) and accuracy (correct output).
  */
 function StackToolPage() {
   const { isDarkMode, toggleDarkMode } = useApp();
@@ -136,13 +159,25 @@ function StackToolPage() {
     }
   };
 
-  // Assemble code using LCC assembler
+  /**
+   * ASSEMBLY PROCESS:
+   * ================
+   * 1. Creates a new JavaScript LCC assembler instance
+   * 2. Assembles the source code into machine code
+   * 3. Creates a JavaScript LCC simulator for step-through visualization
+   * 4. Loads the machine code into the simulator
+   * 5. Sets up symbol table and source line mapping for debugging
+   * 
+   * Note: This is separate from the worker's real LCC compiler.
+   * The JavaScript assembler is used for visualization, while the worker
+   * uses the real LCC compiler for accurate output generation.
+   */
   const assembleCode = useCallback(async (sourceCode) => {
     try {
-      // Create new assembler instance
+      // Create new assembler instance for visualization
       assemblerRef.current = new LCCAssembler();
       
-      // Assemble the code
+      // Assemble the code using JavaScript assembler
       const result = assemblerRef.current.assemble(sourceCode);
       
       if (!result.success) {
@@ -150,20 +185,20 @@ function StackToolPage() {
         return false;
       }
       
-      // Store symbols and program info
+      // Store symbols and program info for debugging
       setSymbols(result.symbols);
       setProgramInfo({
         loadAddress: result.loadAddress,
         programSize: result.machineCode.length
       });
       
-      // Create and initialize simulator
+      // Create and initialize JavaScript simulator for step-through
       simulatorRef.current = new LCCSimulator();
       simulatorRef.current.loadProgram(result.machineCode, result.loadAddress);
       simulatorRef.current.symbols = result.symbols;
       simulatorRef.current.sourceMap = result.sourceMap;
       
-      // Get initial state
+      // Get initial state for visualization
       const initialState = simulatorRef.current.getState();
       updateState(initialState);
       
@@ -191,22 +226,42 @@ function StackToolPage() {
     }
   }, []);
 
-  // Execute single step
+  /**
+   * SINGLE STEP EXECUTION:
+   * ======================
+   * 1. Saves current state for visualization (registers, memory, stack)
+   * 2. Executes ONE instruction using JavaScript simulator
+   * 3. Prevents simulator output from corrupting display (preserves correct output)
+   * 4. Updates visualization state (PC, registers, memory, stack)
+   * 5. Updates source line highlighting for debugging
+   * 
+   * Key: This uses the JavaScript simulator ONLY for visualization state.
+   * The output panel shows correct results from the real LCC compiler.
+   */
   const executeStep = useCallback(() => {
     if (!simulatorRef.current) return false;
     
-    // Save previous state
+    // Save previous state for visualization changes (highlight changes)
     const prevState = simulatorRef.current.getState();
     setPreviousRegisters(prevState.registers);
     setPreviousMemory(prevState.memory);
     setPreviousStack(prevState.stack);
     
-    // Execute one instruction
+    // Preserve the correct output (don't let simulator overwrite it)
+    const originalOutput = simulatorRef.current.output;
+    
+    // Execute ONE instruction in the JavaScript simulator
     const result = simulatorRef.current.step();
+    
+    // Restore original output (critical: prevents wrong output display)
+    simulatorRef.current.output = originalOutput;
     
     if (!result.success) {
       if (result.halted) {
-        setOutput(prev => [...prev, 'Program halted']);
+        // Program finished - get correct output from worker if needed
+        if (output.length === 0) {
+          getCorrectOutput();
+        }
         setIsRunning(false);
       } else if (result.error) {
         setError(result.error);
@@ -215,29 +270,22 @@ function StackToolPage() {
       return false;
     }
     
-    // Get new state
+    // Update visualization state (PC, registers, memory, stack) but preserve output
     const newState = simulatorRef.current.getState();
+    newState.output = originalOutput; // Critical: keep correct output
     updateState(newState);
     
-    // Update current line from source map
+    // Update source line highlighting for debugging
     const sourceLine = simulatorRef.current.sourceMap.get(result.pc);
     if (sourceLine !== undefined) {
       setCurrentLine(sourceLine);
     }
     
     return true;
-  }, [updateState]);
+  }, [updateState, output.length, getCorrectOutput]);
 
-  // Run to completion with correct output
-  const runToCompletion = useCallback(async () => {
-    if (!assembleCode(code)) {
-      return;
-    }
-    
-    setIsRunning(true);
-    setCurrentLine(-1);
-    
-    // Get correct output from worker
+  // Get correct output from worker
+  const getCorrectOutput = useCallback(async () => {
     try {
       const { runProgram, terminalOutput } = useApp.getState();
       const initialOutputLength = terminalOutput.length;
@@ -256,13 +304,29 @@ function StackToolPage() {
         .join('\n');
       
       if (programOutput) {
-        setOutput(programOutput.split('\n').filter(line => line.trim() !== ''));
+        const correctOutputLines = programOutput.split('\n').filter(line => line.trim() !== '');
+        setOutput(correctOutputLines);
+        return correctOutputLines;
       }
     } catch (error) {
       console.warn('Worker execution failed:', error);
     }
+    return [];
+  }, [code, selectedFile]);
+
+  // Run to completion with correct output
+  const runToCompletion = useCallback(async () => {
+    if (!assembleCode(code)) {
+      return;
+    }
     
-    // Also run the simulator to completion (for visualization state)
+    setIsRunning(true);
+    setCurrentLine(-1);
+    
+    // Get correct output from worker first
+    await getCorrectOutput();
+    
+    // Run the simulator to completion (for final visualization state)
     try {
       while (simulatorRef.current && simulatorRef.current.running && simulatorRef.current.instructionsExecuted < 10000) {
         if (!executeStep()) {
@@ -274,7 +338,7 @@ function StackToolPage() {
     }
     
     setIsRunning(false);
-  }, [code, assembleCode, executeStep, selectedFile, updateState, setError]);
+  }, [code, assembleCode, executeStep, getCorrectOutput, setError]);
 
   // Step handler
   const handleStep = useCallback((steps = 1) => {
@@ -307,11 +371,19 @@ function StackToolPage() {
       }
       
       if (steps > 0) {
-        // Single step forward
+        // Step forward (single or multiple steps)
         if (!simulatorRef.current) {
-          assembleCode(code);
-        } else {
-          executeStep();
+          // If simulator doesn't exist, assemble first
+          if (!assembleCode(code)) {
+            return;
+          }
+        }
+        
+        // Execute the specified number of steps
+        for (let i = 0; i < steps; i++) {
+          if (!executeStep()) {
+            break; // Stop if execution fails or program halts
+          }
         }
       } else if (steps < 0) {
         // Step backward
@@ -571,6 +643,7 @@ function StackToolPage() {
               <ExecutionControls
                 onStep={handleStep}
                 onReset={handleReset}
+                onGetCorrectOutput={getCorrectOutput}
                 isRunning={isRunning}
                 isDarkMode={isDarkMode}
                 compact={true}
