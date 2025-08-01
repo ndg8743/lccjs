@@ -26,8 +26,7 @@ function ExecutionControls({ onStep, onReset, onGetCorrectOutput, isRunning, isD
       disabled: isRunning,
       className: isRunning 
         ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-        : 'bg-orange-500 hover:bg-orange-600 text-white',
-      title: 'Step Backward'
+        : 'bg-orange-500 hover:bg-orange-600 text-white'
     },
     {
       label: compact ? '' : 'Step Forward',
@@ -36,8 +35,7 @@ function ExecutionControls({ onStep, onReset, onGetCorrectOutput, isRunning, isD
       disabled: isRunning,
       className: isRunning 
         ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-        : 'bg-green-500 hover:bg-green-600 text-white',
-      title: 'Step Forward'
+        : 'bg-green-500 hover:bg-green-600 text-white'
     },
     {
       label: compact ? '' : (isRunning ? 'Stop' : 'Run'),
@@ -46,8 +44,7 @@ function ExecutionControls({ onStep, onReset, onGetCorrectOutput, isRunning, isD
       disabled: false,
       className: isRunning 
         ? 'bg-red-500 hover:bg-red-600 text-white' 
-        : 'bg-blue-500 hover:bg-blue-600 text-white',
-      title: isRunning ? 'Stop Execution' : 'Run Program'
+        : 'bg-blue-500 hover:bg-blue-600 text-white'
     },
     {
       label: compact ? '' : 'Reset',
@@ -58,8 +55,7 @@ function ExecutionControls({ onStep, onReset, onGetCorrectOutput, isRunning, isD
         ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
         : isDarkMode 
           ? 'bg-gray-700 hover:bg-gray-600 text-white'
-          : 'bg-gray-200 hover:bg-gray-300 text-gray-800',
-      title: 'Reset Program'
+          : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
     },
     ...(onGetCorrectOutput ? [{
       label: compact ? '' : 'Correct Output',
@@ -68,8 +64,7 @@ function ExecutionControls({ onStep, onReset, onGetCorrectOutput, isRunning, isD
       disabled: isRunning,
       className: isRunning 
         ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-        : 'bg-green-500 hover:bg-green-600 text-white',
-      title: 'Get Correct Output from Real LCC'
+        : 'bg-green-500 hover:bg-green-600 text-white'
     }] : [])
   ];
 
@@ -82,26 +77,25 @@ function ExecutionControls({ onStep, onReset, onGetCorrectOutput, isRunning, isD
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
     >
-      <div className="w-full px-2 overflow-x-auto">
-        <div className={`flex items-center ${compact ? 'justify-around' : 'justify-center'} gap-2 min-w-max`}>
+      <div className="w-full px-2">
+        <div className={`flex items-center ${compact ? 'justify-center' : 'justify-center'} gap-1 flex-wrap`}>
           {buttons.map((button, index) => (
-            <motion.button
+            <button
               key={index}
               onClick={button.onClick}
               disabled={button.disabled}
-              title={button.title}
               className={`
-                ${compact ? 'p-2' : 'px-3 py-2'} 
-                rounded-lg font-medium transition-colors flex items-center gap-2
+                ${compact ? 'p-2 min-w-[2.5rem]' : 'px-3 py-2'} 
+                rounded-lg font-medium transition-colors flex items-center justify-center gap-2
                 ${button.className}
                 ${compact ? 'text-sm' : 'text-sm'}
+                focus:outline-none focus:ring-2 focus:ring-opacity-50
+                ${!button.disabled ? 'focus:ring-blue-300' : ''}
               `}
-              whileHover={!button.disabled ? { scale: 1.05 } : {}}
-              whileTap={!button.disabled ? { scale: 0.95 } : {}}
             >
               <i className={`${button.icon} ${compact ? 'text-base' : 'text-sm'}`}></i>
               {button.label && <span className="whitespace-nowrap">{button.label}</span>}
-            </motion.button>
+            </button>
           ))}
         </div>
       </div>
