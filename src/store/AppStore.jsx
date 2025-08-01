@@ -321,8 +321,20 @@ const useAppStore = create(
         }
         
         if (!content) {
+          // Debug info
+          const allFiles = {...state.fileTree, ...JSON.parse(localStorage.getItem('fsWrapper') || {})};
+          console.log('Download debug:', {
+            fileName,
+            extension,
+            baseName,
+            targetFileName: `${baseName}${extension}`,
+            downloadFileName,
+            availableFiles: Object.keys(allFiles),
+            currentFileName: state.currentFileName
+          });
+          
           state.addTerminalOutput(`✗ No content to download for ${downloadFileName}`, 'text-red-400');
-          state.addTerminalOutput('ℹ Available files: ' + Object.keys({...state.fileTree, ...JSON.parse(localStorage.getItem('fsWrapper') || '{}')}).join(', '), 'text-yellow-400');
+          state.addTerminalOutput('ℹ Available files: ' + Object.keys(allFiles).join(', '), 'text-yellow-400');
           return;
         }
         
@@ -430,10 +442,13 @@ const useAppStore = create(
         const content = state.editorContent;
         let fileName = state.currentFileName;
         
+        console.log('runProgram - currentFileName:', fileName);
+        
         // If no filename is set, default to 'program.a'
         if (!fileName) {
           fileName = 'program.a';
           state.setCurrentFileName(fileName);
+          console.log('runProgram - defaulting to:', fileName);
         }
         
         if (!content.trim()) {
@@ -526,6 +541,12 @@ const useAppStore = create(
           }
           
           // Send code to worker for compilation and execution
+          console.log('Sending to worker:', {
+            fileName,
+            filePath: fileName,
+            name: fileName.replace(/\.[^/.]+$/, '')
+          });
+          
           currentState.worker.postMessage({
             type: 'run',
             payload: {

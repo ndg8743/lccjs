@@ -139,6 +139,17 @@ self.onmessage = function(event) {
             // Run LCC Compiler
             try {
                 console.log("Starting LCC compilation...");
+                console.log("Running LCC with filePath:", filePath);
+                
+                // Create a new LCC instance for each run to ensure clean state
+                if (typeof LCC !== 'undefined') {
+                    if (typeof LCC.default === 'function') {
+                        lcc = new LCC.default();
+                    } else if (typeof LCC === 'function') {
+                        lcc = new LCC();
+                    }
+                }
+                
                 lcc.main([filePath]);
                 console.log("LCC compilation completed.");
                 console.log("Files after execution:", Object.keys(self.fsWrapperStorage));

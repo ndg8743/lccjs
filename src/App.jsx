@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { AppProvider } from './store/AppStore';
+import { AppProvider, useApp } from './store/AppStore';
 import Layout from './components/Layout';
 import AppInitializer from './components/AppInitializer';
 import './styles.css';
