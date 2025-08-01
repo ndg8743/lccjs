@@ -219,23 +219,7 @@ function StackToolPage() {
 
   // Step handler
   const handleStep = useCallback((steps = 1) => {
-    if (steps > 0) {
-      // Clear any running interval
-      if (runInterval) {
-        clearInterval(runInterval);
-        setRunInterval(null);
-      }
-      
-      // Single step forward
-      if (!simulatorRef.current) {
-        assembleCode(code);
-      } else {
-        executeStep();
-      }
-    } else if (steps < 0) {
-      // Step backward - not implemented yet
-      setError('Step backward not implemented yet');
-    } else {
+    if (steps === 'run') {
       // Run continuously
       setIsRunning(true);
       const interval = setInterval(() => {
@@ -246,8 +230,53 @@ function StackToolPage() {
         }
       }, executionSpeed);
       setRunInterval(interval);
+    } else if (steps === 'stop') {
+      // Stop running
+      if (runInterval) {
+        clearInterval(runInterval);
+        setRunInterval(null);
+      }
+      setIsRunning(false);
+    } else if (typeof steps === 'number') {
+      // Clear any running interval
+      if (runInterval) {
+        clearInterval(runInterval);
+        setRunInterval(null);
+      }
+      
+      if (steps > 0) {
+        // Single step forward
+        if (!simulatorRef.current) {
+          assembleCode(code);
+        } else {
+          executeStep();
+        }
+      } else if (steps < 0) {
+        // Step backward
+        if (!simulatorRef.current) {
+          setError('Please assemble the code first');
+          return;
+        }
+        
+        // Use the new stepBy method
+        simulatorRef.current.stepBy(steps);
+        
+        // Update state to reflect the restored position
+        const state = simulatorRef.current.getState();
+        updateState(state);
+        
+        // Update current line
+        if (state.currentIteration > 0) {
+          const listing = simulatorRef.current.getCurrentListing();
+          if (listing && listing.lineNum !== undefined) {
+            setCurrentLine(listing.lineNum - 1); // Convert to 0-based
+          }
+        } else {
+          setCurrentLine(-1);
+        }
+      }
     }
-  }, [code, assembleCode, executeStep, runInterval, executionSpeed, updateState]);
+  }, [code, assembleCode, executeStep, runInterval, executionSpeed, updateState, setError]);
 
   // Reset handler
   const handleReset = useCallback(() => {

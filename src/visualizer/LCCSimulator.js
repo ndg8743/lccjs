@@ -1,7 +1,7 @@
 /**
  * LCC Simulator for Browser Visualizer
- * A simplified but accurate LCC interpreter designed for step-by-step visualization
- * Implements the full LCC instruction set
+ * Enhanced version with step forward/backward capabilities
+ * Integrates features from Charlie's interactive_interpreter.js
  */
 
 class LCCSimulator {
@@ -17,36 +17,108 @@ class LCCSimulator {
     this.v = 0;
     this.running = true;
     this.output = '';
+    this.inputBuffer = '';
     
     // Execution tracking
     this.instructionsExecuted = 0;
     this.memoryAccesses = new Set();
+    this.maxStackSize = 0;
+    this.spInitial = 0;
+    this.memMax = 0;
     
     // Symbol table from assembly
     this.symbols = {};
     this.sourceMap = new Map(); // PC -> source line
+    this.listing = []; // Array of listing entries from assembler
+    
+    // Debug and history features from interactive_interpreter.js
+    this.debugMode = false;
+    this.hasJumped = false;
+    this.currentIteration = 0;
+    this.snapshot = []; // History of all state changes
+    this.memoryChange = { hasChanged: false, address: null, old: [], new: [] };
     
     // Initialize SP and FP
     this.r[6] = 0xFFF0; // SP
     this.r[5] = 0xFFF0; // FP
+    this.spInitial = this.r[6];
   }
 
   /**
    * Load machine code into memory
    */
-  loadProgram(machineCode, loadAddress = 0x3000) {
+  loadProgram(machineCode, loadAddress = 0x3000, listing = []) {
     this.pc = loadAddress;
+    this.listing = listing;
     for (let i = 0; i < machineCode.length; i++) {
       this.mem[loadAddress + i] = machineCode[i];
       this.memoryAccesses.add(loadAddress + i);
     }
+    this.memMax = loadAddress + machineCode.length - 1;
+    this.spInitial = this.r[6];
   }
 
   /**
-   * Execute one instruction
+   * Load from .bin or .hex file format
+   */
+  loadBinaryProgram(buffer, isBinary = true) {
+    let offset = 0;
+    
+    if (!isBinary) {
+      // Convert hex string to binary
+      const hexString = buffer.toString().trim();
+      const bytes = [];
+      for (let i = 0; i < hexString.length; i += 2) {
+        bytes.push(parseInt(hexString.substr(i, 2), 16));
+      }
+      buffer = Buffer.from(bytes);
+    }
+    
+    // Check for 'o' signature
+    if (buffer[offset] !== 0x6F) {
+      throw new Error('Invalid binary file format');
+    }
+    offset++;
+    
+    // Read start address
+    const startAddress = buffer.readUInt16LE(offset);
+    offset += 2;
+    
+    // Skip header data until 'C' terminator
+    while (offset < buffer.length && buffer[offset] !== 0x43) {
+      offset++;
+    }
+    
+    if (buffer[offset] !== 0x43) {
+      throw new Error('Header termination character not found');
+    }
+    offset++;
+    
+    // Load machine code
+    let memIndex = this.pc;
+    while (offset + 1 < buffer.length) {
+      const instruction = buffer.readUInt16LE(offset);
+      offset += 2;
+      this.mem[memIndex++] = instruction;
+      this.memoryAccesses.add(memIndex - 1);
+    }
+    
+    this.memMax = memIndex - 1;
+    this.pc = startAddress;
+  }
+
+  /**
+   * Execute one instruction and record state changes
    */
   step() {
     if (!this.running) return { success: false, halted: true };
+    
+    // Save state before execution
+    const prevPC = this.pc;
+    const prevRegs = this.r.slice();
+    const prevFlags = { c: this.c, v: this.v, n: this.n, z: this.z };
+    this.memoryChange = { hasChanged: false, address: null, old: [], new: [] };
+    this.hasJumped = false;
     
     // Fetch
     this.ir = this.mem[this.pc];
@@ -92,242 +164,353 @@ class LCCSimulator {
       
       this.instructionsExecuted++;
       
+      // Record state change in snapshot
+      const logEntry = {
+        pc: { old: prevPC, new: this.pc },
+        registers: { old: prevRegs, new: this.r.slice() },
+        flags: {
+          old: prevFlags,
+          new: { c: this.c, v: this.v, n: this.n, z: this.z }
+        },
+        memory: this.memoryChange,
+        ir: this.ir,
+        instruction: this.decodeInstruction(this.ir),
+        output: this.output
+      };
+      
+      // Update snapshot
+      if (this.currentIteration === this.snapshot.length) {
+        this.snapshot.push(logEntry);
+      } else {
+        this.snapshot[this.currentIteration] = logEntry;
+      }
+      
+      this.currentIteration++;
+      
+      // Update stack size tracking
+      const currentStackSize = this.spInitial - this.r[6];
+      if (currentStackSize > this.maxStackSize) {
+        this.maxStackSize = currentStackSize;
+      }
+      
       return {
         success: true,
         instruction: this.decodeInstruction(this.ir),
-        pc: currentPC
+        pc: currentPC,
+        hasJumped: this.hasJumped
       };
     } catch (error) {
       return {
         success: false,
-        error: error.message
+        error: error.message,
+        pc: currentPC
       };
     }
   }
 
-  // BR - Branch
-  executeBR(cc, pcoffset9) {
-    let takeBranch = false;
-    
-    switch (cc) {
-      case 0: takeBranch = this.z === 1; break; // BRZ
-      case 1: takeBranch = this.z === 0; break; // BRNZ
-      case 2: takeBranch = this.n === 1; break; // BRN
-      case 3: takeBranch = this.n === 0 && this.z === 0; break; // BRP
-      case 4: takeBranch = this.n !== this.v; break; // BRLT
-      case 5: takeBranch = this.n === this.v && this.z === 0; break; // BRGT
-      case 6: takeBranch = this.c === 1; break; // BRC
-      case 7: takeBranch = true; break; // BR (always)
-    }
-    
-    if (takeBranch) {
-      this.pc = (this.pc + pcoffset9) & 0xFFFF;
+  /**
+   * Step forward or backward by the specified number of steps
+   */
+  stepBy(stepNumber) {
+    if (stepNumber > 0) {
+      // Step forward
+      for (let i = 0; i < stepNumber && this.running; i++) {
+        this.step();
+      }
+    } else if (stepNumber < 0) {
+      // Step backward
+      const newState = Math.max(this.currentIteration + stepNumber, 0);
+      this.restorePrevState(newState);
     }
   }
 
-  // ADD
+  /**
+   * Restore to a previous state
+   */
+  restorePrevState(targetIteration) {
+    if (targetIteration >= this.snapshot.length || targetIteration < 0) {
+      return;
+    }
+    
+    const log = this.snapshot[targetIteration];
+    
+    // Restore PC
+    this.pc = log.pc.old;
+    
+    // Restore flags
+    this.c = log.flags.old.c;
+    this.v = log.flags.old.v;
+    this.n = log.flags.old.n;
+    this.z = log.flags.old.z;
+    
+    // Restore registers
+    for (let i = 0; i < 8; i++) {
+      this.r[i] = log.registers.old[i];
+    }
+    
+    // Restore memory changes
+    for (let i = this.currentIteration - 1; i >= targetIteration; i--) {
+      if (this.snapshot[i] && this.snapshot[i].memory.hasChanged) {
+        const memChange = this.snapshot[i].memory;
+        for (let j = 0; j < memChange.old.length; j++) {
+          this.mem[memChange.address + j] = memChange.old[j];
+        }
+      }
+    }
+    
+    // Restore output to the state at targetIteration
+    if (targetIteration > 0) {
+      this.output = this.snapshot[targetIteration - 1].output || '';
+    } else {
+      this.output = '';
+    }
+    
+    this.currentIteration = targetIteration;
+    this.instructionsExecuted = targetIteration;
+  }
+
+  /**
+   * Get current state for visualization
+   */
+  getState() {
+    return {
+      registers: Array.from(this.r),
+      pc: this.pc,
+      ir: this.ir,
+      flags: { n: this.n, z: this.z, c: this.c, v: this.v },
+      memory: this.getVisibleMemory(),
+      output: this.output,
+      halted: !this.running,
+      instructionsExecuted: this.instructionsExecuted,
+      currentIteration: this.currentIteration,
+      totalSnapshots: this.snapshot.length,
+      maxStackSize: this.maxStackSize
+    };
+  }
+
+  /**
+   * Get memory regions that have been accessed
+   */
+  getVisibleMemory() {
+    const memory = {};
+    this.memoryAccesses.forEach(addr => {
+      memory[addr] = this.mem[addr];
+    });
+    return memory;
+  }
+
+  // Instruction implementations
+  executeBR(nzp, pcoffset9) {
+    const conditionMet = 
+      ((nzp & 0x4) && this.n) || 
+      ((nzp & 0x2) && this.z) || 
+      ((nzp & 0x1) && !this.n && !this.z);
+    
+    if (conditionMet) {
+      this.pc = (this.pc + pcoffset9) & 0xFFFF;
+      this.hasJumped = true;
+    }
+  }
+
   executeADD(dr, sr1, bit5, sr2, imm5) {
-    const val1 = this.r[sr1];
-    const val2 = bit5 ? imm5 : this.r[sr2];
+    const val1 = this.toSigned16(this.r[sr1]);
+    const val2 = bit5 ? imm5 : this.toSigned16(this.r[sr2]);
     const result = val1 + val2;
     
     this.r[dr] = result & 0xFFFF;
-    this.setFlags(result);
-    this.setCarryOverflow(val1, val2, result, false);
+    this.setFlags(this.r[dr]);
   }
 
-  // LD - Load
   executeLD(dr, pcoffset9) {
     const addr = (this.pc + pcoffset9) & 0xFFFF;
     this.r[dr] = this.mem[addr];
     this.memoryAccesses.add(addr);
+    this.setFlags(this.r[dr]);
   }
 
-  // ST - Store
   executeST(sr, pcoffset9) {
     const addr = (this.pc + pcoffset9) & 0xFFFF;
+    this.recordMemoryChange(addr, 1);
     this.mem[addr] = this.r[sr];
     this.memoryAccesses.add(addr);
   }
 
-  // BL/BLR - Branch and Link
-  executeBL(bit11, pcoffset11, baser, offset6) {
-    this.r[7] = this.pc; // Save return address in LR
-    
+  executeBL(bit11, pcoffset11, dr, offset6) {
     if (bit11) {
-      // BL - PC-relative
+      // JSR
+      this.r[7] = this.pc;
       this.pc = (this.pc + pcoffset11) & 0xFFFF;
     } else {
-      // BLR - Register-relative
-      this.pc = (this.r[baser] + offset6) & 0xFFFF;
+      // JSRR
+      this.r[7] = this.pc;
+      this.pc = (this.r[dr] + offset6) & 0xFFFF;
     }
+    this.hasJumped = true;
   }
 
-  // AND
   executeAND(dr, sr1, bit5, sr2, imm5) {
     const val1 = this.r[sr1];
-    const val2 = bit5 ? imm5 : this.r[sr2];
-    const result = val1 & val2;
-    
-    this.r[dr] = result;
-    this.setNZ(result);
+    const val2 = bit5 ? imm5 & 0x1F : this.r[sr2];
+    this.r[dr] = val1 & val2;
+    this.setFlags(this.r[dr]);
   }
 
-  // LDR - Load Register
-  executeLDR(dr, baser, offset6) {
-    const addr = (this.r[baser] + offset6) & 0xFFFF;
+  executeLDR(dr, sr1, offset6) {
+    const addr = (this.toSigned16(this.r[sr1]) + offset6) & 0xFFFF;
     this.r[dr] = this.mem[addr];
     this.memoryAccesses.add(addr);
+    this.setFlags(this.r[dr]);
   }
 
-  // STR - Store Register
-  executeSTR(sr, baser, offset6) {
-    const addr = (this.r[baser] + offset6) & 0xFFFF;
+  executeSTR(sr, sr1, offset6) {
+    const addr = (this.toSigned16(this.r[sr1]) + offset6) & 0xFFFF;
+    this.recordMemoryChange(addr, 1);
     this.mem[addr] = this.r[sr];
     this.memoryAccesses.add(addr);
   }
 
-  // CMP - Compare
   executeCMP(sr1, bit5, sr2, imm5) {
-    const val1 = this.r[sr1];
-    const val2 = bit5 ? imm5 : this.r[sr2];
+    const val1 = this.toSigned16(this.r[sr1]);
+    const val2 = bit5 ? imm5 : this.toSigned16(this.r[sr2]);
     const result = val1 - val2;
     
-    this.setFlags(result);
-    this.setCarryOverflow(val1, val2, result, true);
+    // Set flags based on comparison
+    this.n = result < 0 ? 1 : 0;
+    this.z = result === 0 ? 1 : 0;
+    this.v = ((val1 >= 0 && val2 < 0 && result < 0) || 
+              (val1 < 0 && val2 >= 0 && result >= 0)) ? 1 : 0;
+    this.c = (val1 < val2) ? 1 : 0;
   }
 
-  // NOT
   executeNOT(dr, sr) {
-    const result = (~this.r[sr]) & 0xFFFF;
-    this.r[dr] = result;
-    this.setNZ(result);
+    this.r[dr] = (~this.r[sr]) & 0xFFFF;
+    this.setFlags(this.r[dr]);
   }
 
-  // Extended opcodes (MUL, DIV, etc.)
-  executeExtended(dr, sr1, sr2, func) {
-    switch (func) {
-      case 0x07: // MUL
-        const mulResult = this.toSigned16(this.r[dr]) * this.toSigned16(this.r[sr1]);
-        this.r[dr] = mulResult & 0xFFFF;
-        this.setNZ(this.r[dr]);
-        break;
-      
-      case 0x08: // DIV
-        const dividend = this.toSigned16(this.r[dr]);
-        const divisor = this.toSigned16(this.r[sr1]);
-        if (divisor === 0) {
-          throw new Error('Division by zero');
-        }
-        this.r[dr] = Math.trunc(dividend / divisor) & 0xFFFF;
-        this.setNZ(this.r[dr]);
-        break;
-      
-      case 0x0C: // OR
-        this.r[dr] = (this.r[dr] | this.r[sr1]) & 0xFFFF;
-        this.setNZ(this.r[dr]);
-        break;
-      
-      case 0x0D: // XOR
-        this.r[dr] = (this.r[dr] ^ this.r[sr1]) & 0xFFFF;
-        this.setNZ(this.r[dr]);
-        break;
-      
-      case 0x10: // PUSH
-        this.r[6] = (this.r[6] - 1) & 0xFFFF;
-        this.mem[this.r[6]] = this.r[sr1];
-        this.memoryAccesses.add(this.r[6]);
-        break;
-      
-      case 0x11: // POP
-        this.r[dr] = this.mem[this.r[6]];
-        this.memoryAccesses.add(this.r[6]);
-        this.r[6] = (this.r[6] + 1) & 0xFFFF;
-        this.setNZ(this.r[dr]);
-        break;
-      
-      default:
-        throw new Error(`Unknown extended opcode: ${func.toString(16)}`);
-    }
-  }
-
-  // SUB
   executeSUB(dr, sr1, bit5, sr2, imm5) {
-    const val1 = this.r[sr1];
-    const val2 = bit5 ? imm5 : this.r[sr2];
+    const val1 = this.toSigned16(this.r[sr1]);
+    const val2 = bit5 ? imm5 : this.toSigned16(this.r[sr2]);
     const result = val1 - val2;
     
     this.r[dr] = result & 0xFFFF;
-    this.setFlags(result);
-    this.setCarryOverflow(val1, val2, result, true);
+    this.setFlags(this.r[dr]);
   }
 
-  // JMP/RET
-  executeJMP(baser, offset6) {
-    this.pc = (this.r[baser] + offset6) & 0xFFFF;
+  executeJMP(sr1, offset6) {
+    if (sr1 === 0 && offset6 === 0) {
+      // RET instruction (JMP R7)
+      this.pc = this.r[7];
+    } else {
+      this.pc = (this.toSigned16(this.r[sr1]) + offset6) & 0xFFFF;
+    }
+    this.hasJumped = true;
   }
 
-  // MVI - Move Immediate
-  executeMVI(dr, imm9) {
-    this.r[dr] = imm9 & 0x1FF;
+  executeMVI(dr, pcoffset9) {
+    const addr = (this.pc + pcoffset9) & 0xFFFF;
+    this.r[dr] = this.mem[this.mem[addr]];
+    this.memoryAccesses.add(addr);
+    this.memoryAccesses.add(this.mem[addr]);
+    this.setFlags(this.r[dr]);
   }
 
-  // LEA - Load Effective Address
   executeLEA(dr, pcoffset9) {
     this.r[dr] = (this.pc + pcoffset9) & 0xFFFF;
+    this.setFlags(this.r[dr]);
   }
 
-  // TRAP instructions
-  executeTRAP(dr, trapvec) {
-    switch (trapvec) {
-      case 0x00: // HALT
-        this.running = false;
+  executeExtended(dr, sr1, sr2, extop) {
+    switch (extop) {
+      case 0x00: // MUL
+        const mul = this.toSigned16(this.r[sr1]) * this.toSigned16(this.r[sr2]);
+        this.r[dr] = mul & 0xFFFF;
+        this.setFlags(this.r[dr]);
         break;
-      
-      case 0x01: // NL
-        this.output += '\n';
-        break;
-      
-      case 0x02: // DOUT
-        const val = this.toSigned16(this.r[dr]);
-        this.output += val.toString();
-        break;
-      
-      case 0x03: // UDOUT
-        this.output += this.r[dr].toString();
-        break;
-      
-      case 0x04: // HOUT
-        this.output += this.r[dr].toString(16).toUpperCase().padStart(4, '0');
-        break;
-      
-      case 0x05: // AOUT
-        this.output += String.fromCharCode(this.r[dr] & 0xFF);
-        break;
-      
-      case 0x06: // SOUT
-        let addr = this.r[dr];
-        while (this.mem[addr] !== 0 && addr < 0x10000) {
-          this.output += String.fromCharCode(this.mem[addr] & 0xFF);
-          this.memoryAccesses.add(addr);
-          addr++;
+      case 0x01: // DIV
+        const divisor = this.toSigned16(this.r[sr2]);
+        if (divisor === 0) {
+          throw new Error("Division by zero");
         }
+        const div = Math.floor(this.toSigned16(this.r[sr1]) / divisor);
+        this.r[dr] = div & 0xFFFF;
+        this.setFlags(this.r[dr]);
         break;
-      
-      case 0x0B: // M (display memory)
-      case 0x0C: // R (display registers)
-      case 0x0D: // S (display stack)
-      case 0x0E: // BP (breakpoint)
-        // These are debugging instructions - handle in visualizer
+      case 0x02: // MOD
+        const modDivisor = this.toSigned16(this.r[sr2]);
+        if (modDivisor === 0) {
+          throw new Error("Modulo by zero");
+        }
+        const mod = this.toSigned16(this.r[sr1]) % modDivisor;
+        this.r[dr] = mod & 0xFFFF;
+        this.setFlags(this.r[dr]);
         break;
-      
+      case 0x03: // OR
+        this.r[dr] = this.r[sr1] | this.r[sr2];
+        this.setFlags(this.r[dr]);
+        break;
+      case 0x04: // XOR
+        this.r[dr] = this.r[sr1] ^ this.r[sr2];
+        this.setFlags(this.r[dr]);
+        break;
+      case 0x05: // SHF (shift)
+        const shiftAmount = this.r[sr2] & 0xF;
+        const shiftDir = (this.r[sr2] >> 4) & 0x1;
+        if (shiftDir) { // Right shift
+          this.r[dr] = this.r[sr1] >> shiftAmount;
+        } else { // Left shift
+          this.r[dr] = (this.r[sr1] << shiftAmount) & 0xFFFF;
+        }
+        this.setFlags(this.r[dr]);
+        break;
       default:
-        // Input instructions would need special handling
-        break;
+        throw new Error(`Unknown extended opcode: ${extop}`);
     }
   }
 
-  // Helper methods
+  executeTRAP(dr, trapvec) {
+    switch (trapvec) {
+      case 0x25: // HALT
+        this.running = false;
+        break;
+      case 0x01: // DOUT - decimal output
+        this.output += this.toSigned16(this.r[dr]) + '\n';
+        break;
+      case 0x02: // UDOUT - unsigned decimal output
+        this.output += this.r[dr] + '\n';
+        break;
+      case 0x03: // HOUT - hex output
+        this.output += this.r[dr].toString(16).toUpperCase() + '\n';
+        break;
+      case 0x04: // AOUT - ASCII output
+        this.output += String.fromCharCode(this.r[dr] & 0xFF);
+        break;
+      case 0x05: // SOUT - string output
+        let addr = this.r[dr];
+        while (this.mem[addr] !== 0) {
+          this.output += String.fromCharCode(this.mem[addr] & 0xFF);
+          this.memoryAccesses.add(addr);
+          addr = (addr + 1) & 0xFFFF;
+        }
+        break;
+      case 0x06: // NL - newline
+        this.output += '\n';
+        break;
+      case 0x08: // DIN - decimal input
+      case 0x09: // HIN - hex input
+      case 0x0A: // AIN - ASCII input
+      case 0x0B: // SIN - string input
+        // For visualization, these would need to be handled differently
+        // For now, we'll just set a default value
+        this.r[dr] = 0;
+        break;
+      default:
+        throw new Error(`Unknown trap vector: ${trapvec}`);
+    }
+  }
+
+  /**
+   * Helper functions
+   */
   signExtend(value, bits) {
     const sign = (value >> (bits - 1)) & 1;
     if (sign) {
@@ -343,96 +526,96 @@ class LCCSimulator {
     return value;
   }
 
-  setNZ(result) {
-    this.n = (result & 0x8000) ? 1 : 0;
-    this.z = (result & 0xFFFF) === 0 ? 1 : 0;
+  setFlags(value) {
+    const signed = this.toSigned16(value);
+    this.n = signed < 0 ? 1 : 0;
+    this.z = signed === 0 ? 1 : 0;
   }
 
-  setFlags(result) {
-    this.setNZ(result);
-  }
-
-  setCarryOverflow(a, b, result, isSub) {
-    // Simplified carry/overflow detection
-    if (isSub) {
-      this.c = (a < b) ? 1 : 0;
-    } else {
-      this.c = (result > 0xFFFF) ? 1 : 0;
-    }
-    
-    // Overflow detection
-    const signA = (a >> 15) & 1;
-    const signB = (b >> 15) & 1;
-    const signR = (result >> 15) & 1;
-    
-    if (isSub) {
-      this.v = (signA !== signB && signA !== signR) ? 1 : 0;
-    } else {
-      this.v = (signA === signB && signA !== signR) ? 1 : 0;
-    }
-  }
-
-  decodeInstruction(ir) {
-    const opcode = (ir >> 12) & 0xF;
+  /**
+   * Decode instruction to human-readable format
+   */
+  decodeInstruction(instruction) {
+    const opcode = (instruction >> 12) & 0xF;
     const opcodeNames = [
-      'BR', 'ADD', 'LD', 'ST', 'BL', 'AND', 'LDR', 'STR',
+      'BR', 'ADD', 'LD', 'ST', 'JSR/JSRR', 'AND', 'LDR', 'STR',
       'CMP', 'NOT', 'EXT', 'SUB', 'JMP', 'MVI', 'LEA', 'TRAP'
     ];
-    
-    return {
-      opcode: opcodeNames[opcode] || 'UNKNOWN',
-      raw: ir.toString(16).padStart(4, '0').toUpperCase()
-    };
+    return opcodeNames[opcode] || 'UNKNOWN';
   }
 
-  getState() {
-    return {
-      registers: {
-        r0: this.r[0], r1: this.r[1], r2: this.r[2], r3: this.r[3],
-        r4: this.r[4], r5: this.r[5], r6: this.r[6], r7: this.r[7],
-        pc: this.pc, ir: this.ir,
-        sp: this.r[6], fp: this.r[5], lr: this.r[7]
-      },
-      flags: {
-        n: this.n, z: this.z, c: this.c, v: this.v
-      },
-      memory: this.getVisibleMemory(),
-      stack: this.getStack(),
-      output: this.output,
-      running: this.running,
-      instructionsExecuted: this.instructionsExecuted
-    };
+  /**
+   * Record memory changes for undo functionality
+   */
+  recordMemoryChange(address, length = 1) {
+    if (!this.memoryChange.hasChanged) {
+      this.memoryChange.hasChanged = true;
+      this.memoryChange.address = address;
+      this.memoryChange.old = [];
+      this.memoryChange.new = [];
+    }
+    
+    for (let i = 0; i < length; i++) {
+      this.memoryChange.old.push(this.mem[address + i]);
+    }
   }
 
-  getVisibleMemory() {
-    const memory = {};
-    
-    // Include all accessed memory
-    for (const addr of this.memoryAccesses) {
-      memory[addr] = this.mem[addr];
-    }
-    
-    // Include stack region
-    const sp = this.r[6];
-    for (let addr = sp; addr < 0xFFF0 && addr < sp + 32; addr++) {
-      memory[addr] = this.mem[addr];
-    }
-    
-    return memory;
+  /**
+   * Get current iteration/step number
+   */
+  getCurrentIteration() {
+    return this.currentIteration;
   }
 
-  getStack() {
-    const stack = [];
-    const sp = this.r[6];
-    
-    for (let addr = sp; addr < 0xFFF0; addr++) {
-      stack.push({
-        address: addr,
-        value: this.mem[addr]
-      });
+  /**
+   * Get total number of snapshots
+   */
+  getSnapshotCount() {
+    return this.snapshot.length;
+  }
+
+  /**
+   * Get listing entry for current PC if available
+   */
+  getCurrentListing() {
+    if (this.listing && this.currentIteration > 0) {
+      const pc = this.snapshot[this.currentIteration - 1].pc.old;
+      return this.listing[pc] || null;
     }
-    
-    return stack;
+    return null;
+  }
+
+  /**
+   * Enable/disable debug mode
+   */
+  setDebugMode(enabled) {
+    this.debugMode = enabled;
+  }
+
+  /**
+   * Reset the simulator
+   */
+  reset() {
+    this.mem = new Uint16Array(65536);
+    this.r = new Uint16Array(8);
+    this.pc = 0x3000;
+    this.ir = 0;
+    this.n = 0;
+    this.z = 0;
+    this.c = 0;
+    this.v = 0;
+    this.running = true;
+    this.output = '';
+    this.instructionsExecuted = 0;
+    this.memoryAccesses = new Set();
+    this.r[6] = 0xFFF0; // SP
+    this.r[5] = 0xFFF0; // FP
+    this.spInitial = this.r[6];
+    this.maxStackSize = 0;
+    this.currentIteration = 0;
+    this.snapshot = [];
+    this.hasJumped = false;
+    this.debugMode = false;
   }
 }
 
