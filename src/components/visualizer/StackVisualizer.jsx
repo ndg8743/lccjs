@@ -5,14 +5,22 @@ import { motion, AnimatePresence } from 'framer-motion';
  * Stack visualization component with change highlighting
  * Stack grows upward (visually) - newer items appear at the top
  */
-function StackVisualizer({ stack, previousStack = [], sp, fp, isDarkMode }) {
+function StackVisualizer({ 
+  stack = [], 
+  previousStack = [], 
+  sp = 0xFFF0, 
+  fp = 0xFFF0, 
+  isDarkMode = true 
+}) {
   const scrollRef = useRef(null);
   
   // Create a map of previous values for comparison
   const previousValues = {};
-  previousStack.forEach(item => {
-    previousValues[item.address] = item.value;
-  });
+  if (previousStack && Array.isArray(previousStack)) {
+    previousStack.forEach(item => {
+      previousValues[item.address] = item.value;
+    });
+  }
 
   // Generate stack entries from current SP up to initial SP (0xFFF0)
   const stackEntries = [];
@@ -26,8 +34,8 @@ function StackVisualizer({ stack, previousStack = [], sp, fp, isDarkMode }) {
   
   // Build stack from bottom to top (higher addresses at bottom, lower at top)
   for (let addr = initialSP; addr >= bottomAddress; addr--) {
-    const currentItem = stack.find(item => item.address === addr);
-    const wasInPreviousStack = previousStack.some(item => item.address === addr);
+    const currentItem = stack && stack.find(item => item.address === addr);
+    const wasInPreviousStack = previousStack && previousStack.some(item => item.address === addr);
     const previousValue = previousValues[addr];
     
     stackEntries.push({
@@ -43,10 +51,10 @@ function StackVisualizer({ stack, previousStack = [], sp, fp, isDarkMode }) {
   
   // Auto-scroll to top (where new items appear) when stack changes
   useEffect(() => {
-    if (scrollRef.current && stack.length > previousStack.length) {
+    if (scrollRef.current && stack && previousStack && stack.length > previousStack.length) {
       scrollRef.current.scrollTop = 0;
     }
-  }, [stack.length, previousStack.length]);
+  }, [stack, previousStack]);
 
   return (
     <div className="h-full flex flex-col">

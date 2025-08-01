@@ -273,12 +273,16 @@ class LCCSimulator {
    * Get current state for visualization
    */
   getState() {
+    // Calculate stack frames
+    const stack = this.getStack();
+    
     return {
       registers: Array.from(this.r),
       pc: this.pc,
       ir: this.ir,
       flags: { n: this.n, z: this.z, c: this.c, v: this.v },
       memory: this.getVisibleMemory(),
+      stack: stack,
       output: this.output,
       halted: !this.running,
       instructionsExecuted: this.instructionsExecuted,
@@ -286,6 +290,41 @@ class LCCSimulator {
       totalSnapshots: this.snapshot.length,
       maxStackSize: this.maxStackSize
     };
+  }
+  
+  /**
+   * Get stack frames for visualization
+   */
+  getStack() {
+    const stack = [];
+    const sp = this.r[6]; // R6 is SP
+    const fp = this.r[5]; // R5 is FP
+    
+    // Build stack frames from SP to initial SP
+    for (let addr = sp; addr < this.spInitial && addr < 0x10000; addr++) {
+      if (this.mem[addr] !== 0) {
+        stack.push({
+          address: addr,
+          value: this.mem[addr],
+          label: this.getStackLabel(addr, sp, fp)
+        });
+      }
+    }
+    
+    return stack.reverse(); // Reverse so top of stack is at index 0
+  }
+  
+  /**
+   * Get label for stack entry
+   */
+  getStackLabel(addr, sp, fp) {
+    if (addr === sp) return 'SP →';
+    if (addr === fp) return 'FP →';
+    if (addr === sp + 1) return 'Return Address';
+    if (addr === fp - 1) return 'Saved FP';
+    if (addr > fp) return 'Local Variable';
+    if (addr < fp && addr > sp) return 'Parameter';
+    return '';
   }
 
   /**

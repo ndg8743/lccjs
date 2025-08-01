@@ -176,10 +176,10 @@ function StackToolPage() {
 
   // Update visualizer state from bridge state
   const updateState = useCallback((state) => {
-    setRegisters(state.registers);
-    setFlags(state.flags);
-    setMemory(state.memory);
-    setStack(state.stack);
+    setRegisters(state.registers || {});
+    setFlags(state.flags || { n: false, z: false, c: false, v: false });
+    setMemory(state.memory || {});
+    setStack(state.stack || []);
     setOutput(state.output ? state.output.split('\n') : []);
   }, []);
 
