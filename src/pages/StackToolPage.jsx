@@ -492,7 +492,7 @@ function StackToolPage() {
           {/* Controls - Top Right */}
           <div className="col-span-4 row-span-1 bg-gray-800 rounded-lg shadow-xl">
             <div className="h-full flex flex-col">
-              <div className="bg-gray-700 px-4 py-2 text-sm font-semibold">
+              <div className="bg-gray-700 px-4 py-2 text-sm font-semibold rounded-t-lg">
                 EXECUTION CONTROLS
               </div>
               <div className="flex-1 p-4">

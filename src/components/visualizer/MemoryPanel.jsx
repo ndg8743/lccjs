@@ -102,7 +102,7 @@ function MemoryPanel({ memory = {}, previousMemory = {}, pc, sp, isDarkMode }) {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="bg-gray-700 px-4 py-2 text-sm font-semibold">
+      <div className="bg-gray-700 px-4 py-2 text-sm font-semibold rounded-t-lg">
         <div className="flex justify-between items-center">
           <span>MEMORY</span>
           <div className="flex items-center space-x-2">
