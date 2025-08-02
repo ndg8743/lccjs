@@ -44,7 +44,15 @@ import Header from '../components/Header';
  * This approach ensures both educational value (step-through) and accuracy (correct output).
  */
 function StackToolPage() {
-  const { isDarkMode, toggleDarkMode } = useApp();
+  const { 
+    isDarkMode, 
+    toggleDarkMode,
+    runProgram,
+    terminalOutput,
+    setEditorContent,
+    setCurrentFileName,
+    fileTree
+  } = useApp();
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -149,7 +157,6 @@ function StackToolPage() {
 
   // Handle file selection
   const handleFileSelect = (fileName) => {
-    const { fileTree } = useApp();
     const fileContent = fileTree[fileName];
     if (fileContent) {
       setCode(fileContent);
@@ -287,7 +294,6 @@ function StackToolPage() {
   // Get correct output from worker
   const getCorrectOutput = useCallback(async () => {
     try {
-      const { runProgram, terminalOutput, setEditorContent, setCurrentFileName } = useApp.getState();
       const initialOutputLength = terminalOutput.length;
       
       // Set the current visualizer code in the store so worker can run it
@@ -327,7 +333,7 @@ function StackToolPage() {
       setOutput([`Error: ${error.message}`]);
     }
     return [];
-  }, [code, selectedFile]);
+  }, [code, selectedFile, terminalOutput.length, runProgram, setEditorContent, setCurrentFileName]);
 
   // Run to completion with correct output
   const runToCompletion = useCallback(async () => {
