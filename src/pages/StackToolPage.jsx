@@ -304,6 +304,8 @@ function StackToolPage() {
   const getCorrectOutput = useCallback(async () => {
     try {
       const initialOutputLength = terminalOutput.length;
+      console.log('Visualizer getCorrectOutput - Initial terminalOutput:', terminalOutput);
+      console.log('Visualizer getCorrectOutput - Initial length:', initialOutputLength);
       
       // Set the current visualizer code in the store so worker can run it
       setEditorContent(code);
@@ -319,6 +321,7 @@ function StackToolPage() {
       
       // The terminalOutput should be updated by now, get the new portion
       const newOutput = terminalOutput.slice(initialOutputLength);
+      console.log('Visualizer getCorrectOutput - Final terminalOutput:', terminalOutput);
       console.log('Visualizer getCorrectOutput - newOutput:', newOutput);
       
       // Look for actual program output (numbers, text, etc.)
@@ -681,6 +684,22 @@ function StackToolPage() {
                 {output.length === 0 ? (
                   <div className="text-gray-500 italic">
                     No output yet. Run the program or click "Correct Output" to see results.
+                    <br />
+                    <button 
+                      onClick={getCorrectOutput}
+                      className="mt-2 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                    >
+                      Test Correct Output
+                    </button>
+                    <button 
+                      onClick={() => {
+                        console.log('Manual step test triggered');
+                        handleStep(1);
+                      }}
+                      className="mt-2 ml-2 px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
+                    >
+                      Test Step
+                    </button>
                   </div>
                 ) : (
                   output.map((line, idx) => (
