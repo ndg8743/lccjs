@@ -219,6 +219,7 @@ function StackToolPage() {
 
   // Update visualizer state from bridge state
   const updateState = useCallback((state) => {
+    console.log('updateState called with:', state);
     setRegisters(state.registers || {});
     setFlags(state.flags || { n: false, z: false, c: false, v: false });
     setMemory(state.memory || {});
@@ -283,9 +284,17 @@ function StackToolPage() {
     updateState(newState);
     
     // Update source line highlighting for debugging
-    const sourceLine = simulatorRef.current.sourceMap.get(result.pc);
-    if (sourceLine !== undefined) {
-      setCurrentLine(sourceLine);
+    const currentPC = newState.registers.pc;
+    console.log('executeStep - PC:', currentPC, 'sourceMap:', simulatorRef.current.sourceMap);
+    
+    if (simulatorRef.current.sourceMap) {
+      const sourceLine = simulatorRef.current.sourceMap.get(currentPC);
+      if (sourceLine !== undefined) {
+        console.log('executeStep - Setting current line to:', sourceLine);
+        setCurrentLine(sourceLine);
+      } else {
+        console.log('executeStep - No source line found for PC:', currentPC);
+      }
     }
     
     return true;
@@ -305,27 +314,52 @@ function StackToolPage() {
       
       await runProgram(); // This will generate the correct output
       
-      // Extract the program output from terminal
+      // Wait a bit for worker output to be processed
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // The terminalOutput should be updated by now, get the new portion
       const newOutput = terminalOutput.slice(initialOutputLength);
+      console.log('Visualizer getCorrectOutput - newOutput:', newOutput);
       
       // Look for actual program output (numbers, text, etc.)
       const outputLines = [];
       for (const line of newOutput) {
         // Skip status messages, keep actual program output
-        if (!line.includes('Running program') && 
+        const cleanLine = line.trim();
+        if (cleanLine && 
+            !line.includes('Running program') && 
             !line.includes('✓') && 
             !line.includes('✗') && 
             !line.includes('LCC.js') &&
             !line.includes('===') &&
-            line.trim() !== '') {
-          outputLines.push(line);
+            !line.includes('Program statistics') &&
+            !line.includes('Instructions executed') &&
+            !line.includes('Program size') &&
+            !line.includes('Max stack size') &&
+            !line.includes('Load point') &&
+            !line.includes('Input file name') &&
+            !line.includes('Program halted') &&
+            !line.includes('Files after execution') &&
+            !line.includes('Generated file found') &&
+            !line.includes('LCC compilation')) {
+          // If it's a number or looks like program output, include it
+          if (/^-?\d+$/.test(cleanLine) || cleanLine.length < 50) {
+            console.log('Visualizer - Including output line:', cleanLine);
+            outputLines.push(cleanLine);
+          } else {
+            console.log('Visualizer - Skipping long line:', cleanLine.substring(0, 100) + '...');
+          }
+        } else {
+          console.log('Visualizer - Filtering out:', line);
         }
       }
       
       if (outputLines.length > 0) {
+        console.log('Visualizer - Final output lines:', outputLines);
         setOutput(outputLines);
         return outputLines;
       } else {
+        console.log('Visualizer - No output lines found, terminal output was:', newOutput);
         setOutput(['Program executed but no output was generated.']);
       }
     } catch (error) {
