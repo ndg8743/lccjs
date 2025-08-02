@@ -44,6 +44,9 @@ import Header from '../components/Header';
  * This approach ensures both educational value (step-through) and accuracy (correct output).
  */
 function StackToolPage() {
+  console.log('🚀 StackToolPage component mounting');
+  
+  const appHook = useApp();
   const { 
     isDarkMode, 
     toggleDarkMode,
@@ -52,7 +55,20 @@ function StackToolPage() {
     setEditorContent,
     setCurrentFileName,
     fileTree
-  } = useApp();
+  } = appHook;
+  
+  console.log('📊 StackToolPage - App data:', { 
+    terminalOutputLength: terminalOutput?.length || 0, 
+    fileTreeKeys: Object.keys(fileTree || {}),
+    isDarkMode 
+  });
+  
+  // Create refs for fresh state access (fixes stale closure issues)
+  const appRef = useRef(appHook);
+  useEffect(() => {
+    appRef.current = appHook;
+  }, [appHook]);
+
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -102,7 +118,7 @@ function StackToolPage() {
   // Error boundary
   useEffect(() => {
     const handleError = (event) => {
-      console.error('Visualizer error:', event.error);
+      console.error('🔥 Visualizer error:', event.error);
       setHasError(true);
       setError(event.error.message);
     };
@@ -141,15 +157,17 @@ function StackToolPage() {
 
   // Load demo file
   useEffect(() => {
+    console.log('📂 Loading demo file...');
     fetch('/demos/a1test.a')
       .then(res => res.text())
       .then(content => {
+        console.log('✅ Demo file loaded, content length:', content.length);
         setCode(content);
         setSelectedFile('a1test.a');
         setIsLoading(false);
       })
       .catch(err => {
-        console.error('Error loading demo:', err);
+        console.error('❌ Error loading demo:', err);
         setCode('; Error loading demo\nhalt');
         setIsLoading(false);
       });
@@ -157,6 +175,7 @@ function StackToolPage() {
 
   // Handle file selection
   const handleFileSelect = (fileName) => {
+    console.log('📁 File selected:', fileName);
     const fileContent = fileTree[fileName];
     if (fileContent) {
       setCode(fileContent);
@@ -180,15 +199,19 @@ function StackToolPage() {
    * uses the real LCC compiler for accurate output generation.
    */
   const assembleCode = useCallback(async (sourceCode) => {
+    console.log('🔧 Starting assembly process...');
     try {
       // Create new assembler instance for visualization
       assemblerRef.current = new LCCAssembler();
       
       // Assemble the code using JavaScript assembler
       const result = assemblerRef.current.assemble(sourceCode);
+      console.log('⚙️ Assembly result:', result);
       
       if (!result.success) {
-        setError(`Assembly errors:\n${result.errors.join('\n')}`);
+        const errorMsg = `Assembly errors:\n${result.errors.join('\n')}`;
+        console.error('❌ Assembly failed:', errorMsg);
+        setError(errorMsg);
         return false;
       }
       
@@ -205,21 +228,27 @@ function StackToolPage() {
       simulatorRef.current.symbols = result.symbols;
       simulatorRef.current.sourceMap = result.sourceMap;
       
+      console.log('🎯 Simulator initialized with sourceMap:', result.sourceMap);
+      
       // Get initial state for visualization
       const initialState = simulatorRef.current.getState();
+      console.log('🏁 Initial simulator state:', initialState);
       updateState(initialState);
       
       setError(null);
+      console.log('✅ Assembly completed successfully');
       return true;
     } catch (err) {
-      setError(`Assembly error: ${err.message}`);
+      const errorMsg = `Assembly error: ${err.message}`;
+      console.error('💥 Assembly exception:', err);
+      setError(errorMsg);
       return false;
     }
   }, []);
 
   // Update visualizer state from bridge state
   const updateState = useCallback((state) => {
-    console.log('updateState called with:', state);
+    console.log('🔄 updateState called with:', state);
     setRegisters(state.registers || {});
     setFlags(state.flags || { n: false, z: false, c: false, v: false });
     setMemory(state.memory || {});
@@ -247,7 +276,11 @@ function StackToolPage() {
    * The output panel shows correct results from the real LCC compiler.
    */
   const executeStep = useCallback(() => {
-    if (!simulatorRef.current) return false;
+    console.log('👣 executeStep called');
+    if (!simulatorRef.current) {
+      console.warn('⚠️ No simulator available for step execution');
+      return false;
+    }
     
     // Save previous state for visualization changes (highlight changes)
     const prevState = simulatorRef.current.getState();
@@ -259,19 +292,24 @@ function StackToolPage() {
     const originalOutput = simulatorRef.current.output;
     
     // Execute ONE instruction in the JavaScript simulator
+    console.log('⚡ Executing one instruction...');
     const result = simulatorRef.current.step();
+    console.log('📊 Step result:', result);
     
     // Restore original output (critical: prevents wrong output display)
     simulatorRef.current.output = originalOutput;
     
     if (!result.success) {
       if (result.halted) {
+        console.log('🏁 Program halted');
         // Program finished - get correct output from worker if needed
         if (output.length === 0) {
+          console.log('🔍 Getting correct output after halt...');
           getCorrectOutput();
         }
         setIsRunning(false);
       } else if (result.error) {
+        console.error('❌ Step execution error:', result.error);
         setError(result.error);
         setIsRunning(false);
       }
@@ -285,95 +323,108 @@ function StackToolPage() {
     
     // Update source line highlighting for debugging
     const currentPC = newState.registers.pc;
-    console.log('executeStep - PC:', currentPC, 'sourceMap:', simulatorRef.current.sourceMap);
+    console.log('🎯 executeStep - PC:', currentPC, 'sourceMap size:', simulatorRef.current.sourceMap?.size);
     
     if (simulatorRef.current.sourceMap) {
       const sourceLine = simulatorRef.current.sourceMap.get(currentPC);
       if (sourceLine !== undefined) {
-        console.log('executeStep - Setting current line to:', sourceLine);
+        console.log('🔍 executeStep - Setting current line to:', sourceLine);
         setCurrentLine(sourceLine);
       } else {
-        console.log('executeStep - No source line found for PC:', currentPC);
+        console.log('❓ executeStep - No source line found for PC:', currentPC);
       }
     }
     
     return true;
-  }, [updateState, output.length, getCorrectOutput]);
+  }, [updateState, output.length]);
 
-  // Get correct output from worker
+  // Get correct output from worker - FIXED stale closure issue
   const getCorrectOutput = useCallback(async () => {
+    console.log('🎯 getCorrectOutput called');
     try {
-      const initialOutputLength = terminalOutput.length;
-      console.log('Visualizer getCorrectOutput - Initial terminalOutput:', terminalOutput);
-      console.log('Visualizer getCorrectOutput - Initial length:', initialOutputLength);
+      // Get fresh app state to avoid stale closures
+      const freshApp = appRef.current;
+      const freshTerminalOutput = freshApp.terminalOutput;
+      const initialOutputLength = freshTerminalOutput.length;
+      
+      console.log('📊 Initial terminalOutput length:', initialOutputLength);
+      console.log('📋 Initial terminalOutput:', freshTerminalOutput);
       
       // Set the current visualizer code in the store so worker can run it
-      setEditorContent(code);
-      setCurrentFileName(selectedFile || 'visualizer.a');
+      freshApp.setEditorContent(code);
+      freshApp.setCurrentFileName(selectedFile || 'visualizer.a');
       
       // Add feedback message
       setOutput(['Running program through real LCC compiler...']);
       
-      await runProgram(); // This will generate the correct output
+      console.log('🚀 Starting worker execution...');
+      await freshApp.runProgram(); // This will generate the correct output
       
-      // Wait a bit for worker output to be processed
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Wait for worker output to be processed
+      console.log('⏳ Waiting for worker output...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // The terminalOutput should be updated by now, get the new portion
-      const newOutput = terminalOutput.slice(initialOutputLength);
-      console.log('Visualizer getCorrectOutput - Final terminalOutput:', terminalOutput);
-      console.log('Visualizer getCorrectOutput - newOutput:', newOutput);
+      // Get fresh terminal output after worker execution
+      const finalTerminalOutput = appRef.current.terminalOutput;
+      const newOutput = finalTerminalOutput.slice(initialOutputLength);
+      
+      console.log('📤 Final terminalOutput length:', finalTerminalOutput.length);
+      console.log('🆕 New output:', newOutput);
       
       // Look for actual program output (numbers, text, etc.)
       const outputLines = [];
       for (const line of newOutput) {
-        // Skip status messages, keep actual program output
-        const cleanLine = line.trim();
+        // Terminal output is stored as objects with {text, className, timestamp}
+        const lineText = typeof line === 'string' ? line : (line.text || '');
+        const cleanLine = lineText.trim();
+        console.log('🔍 Processing line:', {lineText, cleanLine, originalLine: line});
+        
         if (cleanLine && 
-            !line.includes('Running program') && 
-            !line.includes('✓') && 
-            !line.includes('✗') && 
-            !line.includes('LCC.js') &&
-            !line.includes('===') &&
-            !line.includes('Program statistics') &&
-            !line.includes('Instructions executed') &&
-            !line.includes('Program size') &&
-            !line.includes('Max stack size') &&
-            !line.includes('Load point') &&
-            !line.includes('Input file name') &&
-            !line.includes('Program halted') &&
-            !line.includes('Files after execution') &&
-            !line.includes('Generated file found') &&
-            !line.includes('LCC compilation')) {
+            !lineText.includes('Running program') && 
+            !lineText.includes('✓') && 
+            !lineText.includes('✗') && 
+            !lineText.includes('LCC.js') &&
+            !lineText.includes('===') &&
+            !lineText.includes('Program statistics') &&
+            !lineText.includes('Instructions executed') &&
+            !lineText.includes('Program size') &&
+            !lineText.includes('Max stack size') &&
+            !lineText.includes('Load point') &&
+            !lineText.includes('Input file name') &&
+            !lineText.includes('Program halted') &&
+            !lineText.includes('Files after execution') &&
+            !lineText.includes('Generated file found') &&
+            !lineText.includes('LCC compilation')) {
           // If it's a number or looks like program output, include it
           if (/^-?\d+$/.test(cleanLine) || cleanLine.length < 50) {
-            console.log('Visualizer - Including output line:', cleanLine);
+            console.log('✅ Including output line:', cleanLine);
             outputLines.push(cleanLine);
           } else {
-            console.log('Visualizer - Skipping long line:', cleanLine.substring(0, 100) + '...');
+            console.log('➡️ Skipping long line:', cleanLine.substring(0, 100) + '...');
           }
         } else {
-          console.log('Visualizer - Filtering out:', line);
+          console.log('🚫 Filtering out:', lineText);
         }
       }
       
       if (outputLines.length > 0) {
-        console.log('Visualizer - Final output lines:', outputLines);
+        console.log('🎉 Final output lines:', outputLines);
         setOutput(outputLines);
         return outputLines;
       } else {
-        console.log('Visualizer - No output lines found, terminal output was:', newOutput);
+        console.log('❌ No output lines found');
         setOutput(['Program executed but no output was generated.']);
       }
     } catch (error) {
-      console.warn('Worker execution failed:', error);
+      console.error('💥 Worker execution failed:', error);
       setOutput([`Error: ${error.message}`]);
     }
     return [];
-  }, [code, selectedFile, terminalOutput.length, runProgram, setEditorContent, setCurrentFileName]);
+  }, [code, selectedFile]); // Removed terminalOutput.length dependency
 
   // Run to completion with correct output
   const runToCompletion = useCallback(async () => {
+    console.log('🏃 Running to completion...');
     if (!assembleCode(code)) {
       return;
     }
@@ -398,13 +449,15 @@ function StackToolPage() {
     setIsRunning(false);
   }, [code, assembleCode, executeStep, getCorrectOutput, setError]);
 
-  // Step handler
+  // Step handler - ENHANCED with better debugging
   const handleStep = useCallback((steps = 1) => {
+    console.log('🎮 handleStep called with:', steps);
+    
     if (steps === 'run') {
-      // Run to completion
+      console.log('🏃 Handling run command');
       runToCompletion();
     } else if (steps === 'step-run') {
-      // Run continuously with steps
+      console.log('▶️ Handling step-run command');
       setIsRunning(true);
       const interval = setInterval(() => {
         if (!executeStep()) {
@@ -415,13 +468,15 @@ function StackToolPage() {
       }, executionSpeed);
       setRunInterval(interval);
     } else if (steps === 'stop') {
-      // Stop running
+      console.log('⏹️ Handling stop command');
       if (runInterval) {
         clearInterval(runInterval);
         setRunInterval(null);
       }
       setIsRunning(false);
     } else if (typeof steps === 'number') {
+      console.log('🔢 Handling numeric step:', steps);
+      
       // Clear any running interval
       if (runInterval) {
         clearInterval(runInterval);
@@ -431,16 +486,19 @@ function StackToolPage() {
       if (steps > 0) {
         // Step forward (single or multiple steps)
         if (!simulatorRef.current) {
-          // If simulator doesn't exist, assemble first
+          console.log('🔧 No simulator, assembling first...');
           if (!assembleCode(code)) {
             return;
           }
         }
         
         // Execute the specified number of steps
+        console.log(`➡️ Stepping forward ${steps} step(s)`);
         for (let i = 0; i < steps; i++) {
+          console.log(`🚶 Step ${i + 1}/${steps}`);
           if (!executeStep()) {
-            break; // Stop if execution fails or program halts
+            console.log('⚠️ Step execution failed, stopping');
+            break;
           }
         }
       } else if (steps < 0) {
@@ -450,7 +508,7 @@ function StackToolPage() {
           return;
         }
         
-        // Use the new stepBy method
+        console.log(`⬅️ Stepping backward ${Math.abs(steps)} step(s)`);
         simulatorRef.current.stepBy(steps);
         
         // Update state to reflect the restored position
@@ -472,6 +530,8 @@ function StackToolPage() {
 
   // Reset handler
   const handleReset = useCallback(() => {
+    console.log('🔄 Resetting visualizer state...');
+    
     // Clear any running interval
     if (runInterval) {
       clearInterval(runInterval);
@@ -507,6 +567,7 @@ function StackToolPage() {
   // Auto-assemble when code changes
   useEffect(() => {
     if (code && !isLoading) {
+      console.log('🔄 Code changed, re-assembling...');
       assembleCode(code);
     }
   }, [code, isLoading, assembleCode]);
@@ -686,14 +747,17 @@ function StackToolPage() {
                     No output yet. Run the program or click "Correct Output" to see results.
                     <br />
                     <button 
-                      onClick={getCorrectOutput}
+                      onClick={() => {
+                        console.log('🧪 Test Correct Output clicked');
+                        getCorrectOutput();
+                      }}
                       className="mt-2 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
                     >
                       Test Correct Output
                     </button>
                     <button 
                       onClick={() => {
-                        console.log('Manual step test triggered');
+                        console.log('🧪 Manual step test triggered');
                         handleStep(1);
                       }}
                       className="mt-2 ml-2 px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"

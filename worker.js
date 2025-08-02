@@ -1,5 +1,5 @@
-// worker.js
-let randomnumber = Math.floor(Math.random() * 1000000);
+// Worker for LCC Compiler
+const randomnumber = Math.floor(Math.random() * 100000);
 self.importScripts("./dist/bundle.js" + "?v=" + randomnumber); // Load the LCC compiler
 
 // Initialize LCC
@@ -116,24 +116,36 @@ self.onmessage = function(event) {
 
             console.log("Files before execution:", Object.keys(self.fsWrapperStorage));
 
-            // Capture stdout, stderr, and stdin handling
+            // CRITICAL: Set up stdout/stderr capture BEFORE LCC execution
+            console.log("🔧 Setting up process subscribers...");
             if (self.process && self.process.subscribers) {
+                // Clear previous subscribers
                 if (self.process.subscribers.length > 0) {
+                    console.log("🧹 Clearing", self.process.subscribers.length, "previous subscribers");
                     self.process.subscribers = [];
                 }
                 
+                // Set up new subscriber with debugging
+                console.log("📝 Registering new subscriber...");
                 self.process.subscribe((type, data) => {
+                    console.log("🔔 Worker subscriber triggered:", type, data);
                     if (type === "stdout.write") {
+                        console.log("📤 Sending stdout to main thread:", data);
                         self.postMessage({ type: "stdout", data });
                     } else if (type === "stderr.write") {
+                        console.log("📤 Sending stderr to main thread:", data);
                         self.postMessage({ type: "stderr", data });
                     } else if (type === "exit") {
+                        console.log("📤 Sending exit to main thread:", data);
                         self.postMessage({ type: "exit", code: data });
                     } else if (type === "stdin") {
-                        console.log("stdin requested");
+                        console.log("📥 stdin requested");
                         self.waitForInput();
                     }
                 });
+                console.log("✅ Subscriber registered, total subscribers:", self.process.subscribers.length);
+            } else {
+                console.error("❌ No process or subscribers available!");
             }
 
             // Run LCC Compiler
@@ -150,6 +162,7 @@ self.onmessage = function(event) {
                     }
                 }
                 
+                console.log("🚀 Starting LCC execution...");
                 lcc.main([filePath]);
                 console.log("LCC compilation completed.");
                 console.log("Files after execution:", Object.keys(self.fsWrapperStorage));
@@ -173,6 +186,6 @@ self.onmessage = function(event) {
         }
     } catch (e) {
         console.error("Error in worker message handler:", e);
-        self.postMessage({ type: "stderr", data: "Worker error: " + e.toString() });
+        self.postMessage({ type: "stderr", data: e.toString() });
     }
 };

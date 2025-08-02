@@ -31,7 +31,12 @@ const process = {
     },
     stdout: {
         write: (data) => {
-            process.subscribers.forEach(callback => callback("stdout.write", data));
+            console.log('🔥 POLYFILL stdout.write called with:', data);
+            console.log('🔥 POLYFILL subscribers count:', process.subscribers.length);
+            process.subscribers.forEach((callback, index) => {
+                console.log(`🔥 POLYFILL calling subscriber ${index}:`, callback);
+                callback("stdout.write", data);
+            });
             console.log(data)
         }
     },
